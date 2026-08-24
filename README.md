@@ -1,0 +1,222 @@
+# MindEase Campus
+
+A working frontend prototype of a privacy-first digital psychological support
+platform for students — anonymous peer support, a private journal and mood
+history, an explainable support-indicator model, and a counsellor platform where
+a human makes every decision.
+
+Built against SIH problem statement **SW-55**.
+
+## Quick start
+
+```bash
+npm install
+npm run dev
+```
+
+Then open <http://localhost:3000>.
+
+There is no backend, no database and no account to create. Everything runs in
+the browser.
+
+## Running the demo
+
+Open **<http://localhost:3000/demo>**. It is a presenter's companion: the ten
+demo steps with the exact route for each one (clickable), what to say, what the
+audience should notice, reset controls, and switches for the two failure states.
+
+Reset with demo history before you present — the longitudinal support indicator
+needs four weeks of check-ins to have anything real to compute from.
+
+The short version of the story:
+
+> anonymous onboarding → community → private reflection → support indicator →
+> explicit counselling opt-in → counsellor review → support action → aggregate
+> trends, with no identity exposure anywhere along the line.
+
+## Architecture
+
+Next.js 15 (App Router), React 19, TypeScript in strict mode, Tailwind v4. No
+UI framework, no chart library — every component and every chart is in this
+repository.
+
+```
+app/
+├─ page.tsx              landing: the privacy promise, before anything is collected
+├─ onboarding/           six-step privacy-first onboarding
+├─ demo/                 presenter's companion
+├─ student/              mobile-first, bottom navigation
+│  ├─ home/              greeting, daily check-in, four quick actions, mood pattern
+│  ├─ community/         feed, post detail, composer, saved
+│  ├─ journal/           entries, editor, single entry, trends
+│  ├─ support/           resource hub, counselling request wizard, appointments
+│  ├─ help/              crisis / immediate-help screen
+│  └─ settings/          profile, privacy, consent, notifications, a11y, data
+└─ counsellor/           desktop-first, sidebar, dense
+   ├─ dashboard/         today's overview, priority queue, campus preview
+   ├─ alerts/            anonymised queue + explainable alert detail
+   ├─ cases/             case list + case detail with the consent boundary
+   ├─ appointments/      month calendar + day panel + status tables
+   ├─ moderation/        AI flags, student reports, human decisions, audit trail
+   ├─ resources/         library, draft creation, recommendation explainability
+   ├─ analytics/         aggregated campus trends with a suppression threshold
+   └─ settings/          role capability matrix, audit logs
+
+components/
+├─ ui/          Button, Card, Badge, Chip, Tabs, Modal, Drawer, DataTable, …
+├─ privacy/     the privacy primitives (see below)
+├─ support/     support-indicator surfaces, HumanReviewBanner
+├─ charts/      all SVG charts, hand-rolled
+├─ community/   PostCard, ReplyCard, reactions, reporting
+├─ journal/     PrivateSpaceHeader, JournalEditor, JournalCard
+├─ checkin/     the daily check-in
+└─ nav/         student top bar + bottom nav, counsellor sidebar, notifications
+
+lib/
+├─ types.ts             the whole domain model
+├─ store.tsx            one client store, persisted to localStorage
+├─ support-indicator.ts the explainable support model
+├─ moderation.ts        pre-post content screening
+├─ analytics.ts         campus aggregates + the suppression threshold
+├─ privacy.ts           pseudonym generation, consent copy, shared-data scope
+├─ resources.ts         resource library + crisis contact slots
+├─ seed.ts              demo campus and the student's own history
+└─ format.ts            moods, dates, small helpers
+
+design-system/tokens.css   colour scales, radii, shadows
+docs/spec-digest.md        the condensed source spec each screen was built against
+```
+
+### State
+
+`lib/store.tsx` holds the entire application state in one React context and
+persists it to `localStorage` under `mindease.campus.v1`.
+
+**This is a prototype decision.** It stands in for the platform's protected
+on-device storage model and makes the whole end-to-end journey demonstrable in
+one browser with no server — the student's actions genuinely drive what the
+counsellor sees. `localStorage` is not encrypted storage, and a real deployment
+would replace this layer entirely.
+
+The store also carries the things that are easy to forget: an idle session lock,
+an audit trail written on every consent and moderation decision, and simulated
+failure switches.
+
+## The privacy primitives
+
+| Primitive | Where | What it does |
+|---|---|---|
+| `PrivacyBadge` | `components/privacy` | Anonymous / Private / Shared / Aggregate status |
+| `AnonymousModeBar` | `components/privacy` | The persistent "Anonymous mode ON" bar in community contexts |
+| `ConsentDialog` | `components/privacy` | Lists what WILL and what will NOT be shared, side by side, before anything is sent |
+| `DataPermissionCard` | `components/privacy` | A single consent switch with the reason it exists |
+| `SafeContentWarning` | `components/privacy` | Non-alarming reveal gate before potentially difficult content |
+| `ReauthDialog` | `components/privacy` | Device-local re-authentication before a sensitive action |
+| `LockScreen` | `components/privacy` | Idle session lock after 15 minutes |
+| `SupportLevelBadge` / `IndicatorPanel` | `components/support` | AI signals communicated without medicalising them — counsellor-side only |
+| `HumanReviewBanner` | `components/support` | The standing reminder that model output is not a diagnosis |
+| `StudentSupportPrompt` | `components/support` | The student-facing offer: no level, no score, no percentage |
+
+## The support-indicator model
+
+`lib/support-indicator.ts`. A **transparent, rule-based stand-in** for what
+would be a trained model in production. It reads the student's own check-ins and
+journal moods over four weeks and emits up to nine signals — sustained low
+mood, negative mood trend, consecutive difficult days, academic stress, social
+withdrawal, sleep disruption, financial pressure, low mood while journalling,
+and one acute signal: recent crisis-related language on the student's own
+content.
+
+Every signal carries the plain-language evidence that produced it, because the
+counsellor UI has to answer *why does this alert exist?*
+
+- Thresholds and weights: `computeSupportIndicator` in
+  `lib/support-indicator.ts`. Total weight ≥ 2 is moderate, ≥ 4 is high.
+- **Longitudinal mood evidence alone tops out at "high".** "Critical" carries a
+  specific operational meaning — immediate review under the institutional
+  safety protocol — and this model has no way to see acute risk except through
+  a crisis flag raised on the student's own content. Letting a run of low
+  check-ins reach "critical" would tell a counsellor something the evidence does
+  not support, and would blunt the level that should mean the most. So critical
+  requires that acute signal to be present.
+- "Model confidence" describes how much evidence the signals rest on. It is
+  **not** a probability of illness, and the panel says so on screen.
+- The student never sees the level, the confidence, the weights or the word
+  "risk". `shouldPromptStudent()` decides only whether to make a supportive
+  offer.
+
+Being rule-based is a feature for a jury: every alert on the counsellor screen
+can be traced back to specific check-ins in front of them.
+
+## Moderation
+
+`lib/moderation.ts` screens content before it is published. Crisis language
+takes precedence over everything else and produces a **supportive** response —
+an offer of help alongside the option to post anyway — never a block and never
+an internal label like "HIGH RISK".
+
+A crisis flag still reaches the counsellor's queue, because the spec requires it
+to be routed for a supportive response. The distinction the code makes is that a
+crisis flag **does not hold the post back** — it publishes as normal and raises
+a queue item asking for support, whereas the other flags offer the author a
+review before publishing. That queue item is also the only acute input the
+support-indicator model has.
+
+Other flags (harmful advice, harassment,
+misinformation, and identifiers that would de-anonymise the author) offer the
+author a review before publishing, then route to a human queue.
+
+Also rule-based, also deliberately readable.
+
+## The aggregation threshold
+
+`lib/analytics.ts` exports `MIN_AGGREGATION` (5) and `applyThreshold()`. Any
+group smaller than the threshold is suppressed rather than displayed — a bar of
+height 2 in a small department is not an aggregate, it is two identifiable
+students. The suppressed rows show neither name nor counts, because naming them
+while withholding the numbers still narrows the field.
+
+The analytics screen exposes the threshold as a slider so the safeguard can be
+demonstrated rather than merely claimed. In production it is a fixed policy
+value.
+
+## Accessibility
+
+Keyboard navigation with visible focus, screen-reader semantics, and labels on
+every control are always on. Settings → Accessibility adds high contrast,
+reduced motion and larger text, applied to the document root and honoured across
+both roles. `prefers-reduced-motion` is respected automatically.
+
+Charts never encode meaning in colour alone: every mood mark carries its emoji
+and label, and each chart offers a "Show as a table" view. The mood ramp is a
+diverging palette validated for colour-vision separation.
+
+## Not production
+
+Stated plainly, because a prototype that hides its edges is worse than one that
+names them:
+
+- **No backend, no database, no API.** Everything is client-side.
+- **No real authentication.** Role separation is a route split. A deployment
+  must enforce role-based authorization and consent boundaries server-side — the
+  counsellor settings screen says this on screen rather than implying the UI is
+  the control.
+- **No real crisis contacts.** Every entry in `CRISIS_CONTACTS` is
+  `configured: false` and renders as an explicit "configured at deployment"
+  notice. A wrong helpline number in a crisis is worse than no number, so this
+  prototype ships none.
+- **The moderation classifier and the support-indicator model are rule sets**,
+  not trained models.
+- **`localStorage` is not encrypted storage.** It is a readable stand-in for the
+  protected on-device storage the product describes.
+- **Resource creation is not persisted** — drafts live in component state and
+  say so on the card.
+
+## Scripts
+
+```bash
+npm run dev        # development server
+npm run build      # production build (also runs the type check)
+npm run start      # serve the production build
+npm run typecheck  # tsc --noEmit
+```

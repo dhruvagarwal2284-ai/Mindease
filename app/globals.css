@@ -1,0 +1,150 @@
+@import "tailwindcss";
+@import "../design-system/tokens.css";
+
+@source "../app";
+@source "../components";
+@source "../lib";
+
+/* ------------------------------------------------------------------ base */
+
+html {
+  background: var(--color-canvas);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-navy-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+/* Scalable typography — the accessibility panel toggles this on <html>. */
+html[data-text="large"] {
+  font-size: 118%;
+}
+
+/* High-contrast mode: darken text, strengthen borders, drop soft tints. */
+html[data-contrast="high"] body {
+  color: #000;
+  background: #fff;
+}
+
+html[data-contrast="high"] .card,
+html[data-contrast="high"] .surface {
+  border-color: #000 !important;
+  border-width: 2px !important;
+  background: #fff !important;
+}
+
+html[data-contrast="high"] .muted {
+  color: #1a1a1a !important;
+}
+
+html[data-contrast="high"] a,
+html[data-contrast="high"] button {
+  text-decoration-thickness: 2px;
+}
+
+/* Reduced motion — user toggle plus OS preference. */
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ------------------------------------------------------- focus & a11y ---- */
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-teal-500);
+  outline-offset: 2px;
+  border-radius: 0.35rem;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-navy-900);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 0 0 0.5rem 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* --------------------------------------------------------- primitives ---- */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-navy-100);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.muted {
+  color: var(--color-ink-muted);
+}
+
+/* Hide scrollbars on horizontal chip rails without losing scrollability. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes me-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fade-up {
+  animation: me-fade-up 0.28s ease-out both;
+}
+
+@keyframes me-pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-pulse-soft {
+  animation: me-pulse-soft 1.6s ease-in-out infinite;
+}
+
+/* Print: the counsellor screens are occasionally printed for case files. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

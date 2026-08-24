@@ -1,0 +1,116 @@
+/*
+ * MindEase Campus — design tokens.
+ *
+ * Visual state model (section 17 of the spec):
+ *   mint   -> normal support / completed
+ *   blue   -> information / privacy
+ *   amber  -> elevated / needs review
+ *   red    -> urgent / crisis workflow only
+ *   violet -> counsellor / professional workspace
+ */
+
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+
+  /* Primary / trust — deep navy */
+  --color-navy-50: #f2f6fa;
+  --color-navy-100: #e2ebf3;
+  --color-navy-200: #c3d5e6;
+  --color-navy-300: #93b2cd;
+  --color-navy-400: #5b86ac;
+  --color-navy-500: #3a6690;
+  --color-navy-600: #2b5178;
+  --color-navy-700: #234161;
+  --color-navy-800: #1a3049;
+  --color-navy-900: #122135;
+  --color-navy-950: #0a1522;
+
+  /* Primary action — teal */
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #cdfaf1;
+  --color-teal-200: #9bf3e4;
+  --color-teal-300: #61e5d3;
+  --color-teal-400: #2fcdbd;
+  --color-teal-500: #14b0a3;
+  --color-teal-600: #0d8d85;
+  --color-teal-700: #0f716c;
+  --color-teal-800: #115a57;
+  --color-teal-900: #124a48;
+
+  /* Support — soft mint */
+  --color-mint-50: #eefdf4;
+  --color-mint-100: #d5f9e4;
+  --color-mint-200: #aef1cc;
+  --color-mint-300: #75e3ac;
+  --color-mint-400: #3bcd88;
+  --color-mint-500: #17b26a;
+  --color-mint-600: #0b8f55;
+  --color-mint-700: #0a7246;
+  --color-mint-800: #0b5a3a;
+  --color-mint-900: #0a4a31;
+
+  /* Information / privacy — blue */
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-200: #bfdbfe;
+  --color-info-300: #93c5fd;
+  --color-info-400: #60a5fa;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+  --color-info-800: #1e40af;
+  --color-info-900: #1e3a8a;
+
+  /* Elevated / needs review — amber */
+  --color-amber-50: #fffaeb;
+  --color-amber-100: #fef0c7;
+  --color-amber-200: #fedf89;
+  --color-amber-300: #fec84b;
+  --color-amber-400: #fdb022;
+  --color-amber-500: #f79009;
+  --color-amber-600: #dc6803;
+  --color-amber-700: #b54708;
+  --color-amber-800: #93370d;
+  --color-amber-900: #7a2e0e;
+
+  /* Urgent / crisis only — red */
+  --color-urgent-50: #fef3f2;
+  --color-urgent-100: #fee4e2;
+  --color-urgent-200: #fecdca;
+  --color-urgent-300: #fda29b;
+  --color-urgent-400: #f97066;
+  --color-urgent-500: #f04438;
+  --color-urgent-600: #d92d20;
+  --color-urgent-700: #b42318;
+  --color-urgent-800: #912018;
+  --color-urgent-900: #7a271a;
+
+  /* Counsellor / professional workspace — violet */
+  --color-pro-50: #f5f3ff;
+  --color-pro-100: #ede9fe;
+  --color-pro-200: #ddd6fe;
+  --color-pro-300: #c4b5fd;
+  --color-pro-400: #a78bfa;
+  --color-pro-500: #8b5cf6;
+  --color-pro-600: #7c3aed;
+  --color-pro-700: #6d28d9;
+  --color-pro-800: #5b21b6;
+  --color-pro-900: #4c1d95;
+
+  /* Neutral canvas */
+  --color-canvas: #f7f9fb;
+  --color-surface: #ffffff;
+
+  /* Secondary body copy. Desaturated on purpose: the navy scale is saturated
+     enough that using it for prose makes every paragraph read like a link. */
+  --color-ink-muted: #556575;
+
+  --radius-card: 1rem;
+
+  --shadow-card: 0 1px 2px rgb(18 33 53 / 0.06), 0 1px 3px rgb(18 33 53 / 0.05);
+  --shadow-raised: 0 4px 16px rgb(18 33 53 / 0.08), 0 1px 3px rgb(18 33 53 / 0.06);
+  --shadow-float: 0 12px 32px rgb(18 33 53 / 0.14);
+}
