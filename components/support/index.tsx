@@ -105,7 +105,7 @@ export function StudentSupportPrompt({
         <LinkButton href="/student/support" tone="primary">
           Explore support
         </LinkButton>
-        <LinkButton href="/student/support/request">Talk to someone</LinkButton>
+        <LinkButton href="/student/peer">Talk to someone</LinkButton>
         {onDismiss ? (
           <Button tone="ghost" onClick={onDismiss}>
             Not now

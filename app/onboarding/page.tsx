@@ -9,7 +9,7 @@ import { cx } from "@/lib/format";
 import { CONSENT_COPY, DEFAULT_CONSENT, generateIdentity } from "@/lib/privacy";
 import { useStore } from "@/lib/store";
 import { CONCERN_TAGS } from "@/lib/types";
-import type { AnonymousIdentity, ConcernTag, ConsentKey, ConsentSettings } from "@/lib/types";
+import type { AnonymousIdentity, ConcernTag, ConsentKey, ConsentSettings, SupportRoleMode } from "@/lib/types";
 
 const STEPS = [
   "Welcome",
@@ -18,6 +18,7 @@ const STEPS = [
   "Your identity",
   "Preferences",
   "Consent",
+  "Your role",
 ] as const;
 
 const PRIVACY_CARDS = [
@@ -73,6 +74,7 @@ export default function OnboardingPage() {
   const [identity, setIdentity] = useState<AnonymousIdentity | null>(null);
   const [interests, setInterests] = useState<ConcernTag[]>([]);
   const [consent, setConsent] = useState<ConsentSettings>({ ...DEFAULT_CONSENT });
+  const [supportMode, setSupportMode] = useState<SupportRoleMode>("seeking");
 
   if (!ready) {
     return (
@@ -94,7 +96,7 @@ export default function OnboardingPage() {
 
   const finish = () => {
     const id = identity ?? generateIdentity();
-    completeOnboarding(id, consent);
+    completeOnboarding(id, consent, supportMode);
     router.replace("/student/home");
   };
 
@@ -303,15 +305,92 @@ export default function OnboardingPage() {
             </p>
             <div className="mt-5 space-y-2.5">
               {(Object.keys(CONSENT_COPY) as ConsentKey[]).map((key) => (
-                <DataPermissionCard
-                  key={key}
-                  label={CONSENT_COPY[key].label}
-                  why={CONSENT_COPY[key].why}
-                  sensitive={CONSENT_COPY[key].sensitive}
-                  checked={consent[key]}
-                  onChange={(v) => setConsent((c) => ({ ...c, [key]: v }))}
-                />
+                 <DataPermissionCard
+                   key={key}
+                   label={CONSENT_COPY[key].label}
+                   why={CONSENT_COPY[key].why}
+                   sensitive={CONSENT_COPY[key].sensitive}
+                   checked={consent[key]}
+                   onChange={(v) => setConsent((c) => ({ ...c, [key]: v }))}
+                 />
               ))}
+            </div>
+          </section>
+        ) : null}
+
+        {/* ------------------------------------------------ 7 your role */}
+        {step === 6 ? (
+          <section aria-labelledby="s6">
+            <h1 id="s6" className="text-2xl font-semibold tracking-tight text-navy-900">
+              How would you like to start?
+            </h1>
+            <p className="muted mt-2 text-sm">
+              Choose your initial focus. This is purely a role mode — your anonymous identity stays
+              identical either way, and you can switch roles anytime.
+            </p>
+
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => setSupportMode("seeking")}
+                className={cx(
+                  "w-full text-left rounded-2xl border-2 p-5 transition-all cursor-pointer flex items-start gap-4",
+                  supportMode === "seeking"
+                    ? "border-teal-600 bg-teal-50/70 shadow-sm"
+                    : "border-navy-100 bg-white hover:border-navy-200",
+                )}
+              >
+                <span className="text-3xl" aria-hidden>
+                  🌱
+                </span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-semibold text-navy-900">Get support</h2>
+                    {supportMode === "seeking" ? (
+                      <span className="text-xs font-semibold text-teal-800 bg-teal-100 px-2.5 py-0.5 rounded-full">
+                        Selected
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="muted mt-1 text-sm">
+                    Access private journaling, daily check-ins, campus resources, and peer or counsellor support when you need it.
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSupportMode("supporting")}
+                className={cx(
+                  "w-full text-left rounded-2xl border-2 p-5 transition-all cursor-pointer flex items-start gap-4",
+                  supportMode === "supporting"
+                    ? "border-teal-600 bg-teal-50/70 shadow-sm"
+                    : "border-navy-100 bg-white hover:border-navy-200",
+                )}
+              >
+                <span className="text-3xl" aria-hidden>
+                  🤝
+                </span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-semibold text-navy-900">Support someone as a peer</h2>
+                    {supportMode === "supporting" ? (
+                      <span className="text-xs font-semibold text-teal-800 bg-teal-100 px-2.5 py-0.5 rounded-full">
+                        Selected
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="muted mt-1 text-sm">
+                    Opt in to be available for 1:1 anonymous chat with peers on campus. No obligations, no identity exposure.
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-xl border border-navy-100 bg-navy-50/60 p-4 text-xs text-navy-700">
+              <p>
+                💡 <strong>Remember:</strong> There are no separate accounts or forms. You can toggle between seeking and supporting at any time from your sidebar or settings.
+              </p>
             </div>
           </section>
         ) : null}
@@ -339,7 +418,7 @@ export default function OnboardingPage() {
             </Button>
           ) : (
             <Button tone="primary" size="lg" onClick={finish}>
-              I understand &amp; continue
+              Enter MindEase
             </Button>
           )}
         </div>

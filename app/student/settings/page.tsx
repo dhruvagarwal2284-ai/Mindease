@@ -87,6 +87,7 @@ export default function StudentSettingsPage() {
     state,
     setConsent,
     setA11y,
+    setSupportMode,
     regenerateIdentity,
     exportData,
     deleteMyData,
@@ -158,6 +159,40 @@ export default function StudentSettingsPage() {
           </section>
 
           <section className="card p-4 sm:p-5">
+            <SectionTitle
+              title="Peer role"
+              subtitle="Choose whether you are looking for support or available to help others."
+            />
+            <div className="flex items-start justify-between gap-4 rounded-xl border border-navy-100 p-4 mt-2">
+              <div>
+                <p className="font-medium text-navy-900">
+                  {state.supportMode === "supporting" ? "Supporting peers" : "Seeking support"}
+                </p>
+                <p className="muted mt-0.5 text-sm">
+                  {state.supportMode === "supporting"
+                    ? "You are opted in to receive 1:1 anonymous chat requests from peers on campus."
+                    : "You are in student mode, exploring resources and seeking peer or counsellor support."}
+                </p>
+              </div>
+              <Toggle
+                checked={state.supportMode === "supporting"}
+                onChange={(v) => {
+                  const next = v ? "supporting" : "seeking";
+                  setSupportMode(next);
+                  toast(
+                    v ? "Switched to Peer Supporter" : "Switched to Seeking Support",
+                    "info",
+                    v
+                      ? "You are now available for 1:1 peer chats."
+                      : "You are now in student mode looking for resources or support.",
+                  );
+                }}
+                label="Peer supporter role"
+              />
+            </div>
+          </section>
+
+          <section className="card p-4 sm:p-5">
             <SectionTitle title="Counsellor connections" />
             {state.cases.filter((c) => c.isDemoStudent).length === 0 ? (
               <p className="muted text-sm">
@@ -166,7 +201,7 @@ export default function StudentSettingsPage() {
                   href="/student/support/request"
                   className="font-medium text-teal-800 underline underline-offset-2"
                 >
-                  Talk to someone
+                  Book a counsellor
                 </Link>
                 .
               </p>
