@@ -15,27 +15,53 @@ export function LandingHeader({
   microTagline = DEFAULT_HEADER_MICRO_TAGLINE,
   showEmergencyBanner = true,
 }: LandingHeaderProps) {
+  const [isBannerVisible, setIsBannerVisible] = React.useState(showEmergencyBanner);
+
   return (
     <div className="w-full sticky top-0 z-40 bg-surface/85 backdrop-blur-2xl backdrop-saturate-150 border-b border-navy-200/50 shadow-xs transition-all">
-      {/* 1. Subtle Emergency Banner */}
-      {showEmergencyBanner ? (
-        <div className="w-full bg-red-500/10 border-b border-red-500/20 text-red-900 dark:text-red-300 py-2 px-4 text-xs backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm" aria-hidden>
+      {/* 1. Subtle Emergency Banner with Dismiss button */}
+      {isBannerVisible ? (
+        <div className="w-full bg-red-500/10 border-b border-red-500/20 text-red-900 dark:text-red-300 py-1.5 px-4 text-xs backdrop-blur-md transition-all animate-fade-in">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm shrink-0" aria-hidden>
                 🆘
               </span>
-              <span className="font-semibold">Need urgent support?</span>
-              <span className="hidden sm:inline opacity-90">
+              <span className="font-semibold shrink-0">Need urgent support?</span>
+              <span className="hidden sm:inline opacity-90 truncate">
                 Confidential 24/7 crisis hotlines are always open.
               </span>
             </div>
-            <Link
-              href="/student/help"
-              className="font-bold text-red-700 hover:text-red-900 hover:underline flex items-center gap-1 shrink-0"
-            >
-              Get immediate help <span aria-hidden>→</span>
-            </Link>
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href="/student/help"
+                className="font-bold text-red-700 hover:text-red-900 hover:underline flex items-center gap-1 shrink-0"
+              >
+                Get immediate help <span aria-hidden>→</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsBannerVisible(false)}
+                className="p-1 rounded-md text-red-800/70 hover:text-red-950 hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 transition-colors"
+                aria-label="Dismiss banner"
+                title="Dismiss banner"
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
