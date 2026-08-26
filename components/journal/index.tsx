@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+// 🔥 Firebase Imports
+import { doc, setDoc, deleteDoc, collection } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 import { MOOD_COLOR } from "@/components/charts";
 import { Badge, Button, Callout, Chip, Input, Modal, Textarea } from "@/components/ui";
 import { cx, excerpt, formatDay, isoDay, mood as moodDef, MOODS } from "@/lib/format";
@@ -78,13 +82,13 @@ export function JournalCard({ entry }: { entry: JournalEntry }) {
       </div>
 
       <p className="mt-2.5 text-sm leading-relaxed text-navy-700">
-        {entry.body.trim() ? excerpt(entry.body, 150) : "(empty entry)"}
+        {entry.body?.trim() ? excerpt(entry.body, 150) : "(empty entry)"}
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {entry.isDraft ? <Badge tone="neutral">Draft</Badge> : null}
         {entry.sharedWithCounsellor ? <Badge tone="amber">Shared</Badge> : null}
-        {entry.tags.map((t) => (
+        {entry.tags?.map((t) => (
           <span key={t} className="muted text-xs">
             {t}
           </span>
@@ -98,7 +102,10 @@ export function JournalCard({ entry }: { entry: JournalEntry }) {
 
 export function JournalEditor({ entry }: { entry?: JournalEntry }) {
   const router = useRouter();
-  const { saveJournal, deleteJournal, toast, state } = useStore();
+  const { toast, state } = useStore();
+  
+  // Tera user handle Firebase me link karne ke liye
+  const myHandle = state.identity?.handle ?? "MindMate";
 
   const [entryId, setEntryId] = useState<string | undefined>(entry?.id);
   const [title, setTitle] = useState(entry?.title ?? "");
@@ -111,29 +118,51 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
 
   const dirty = useRef(false);
 
-  /* Autosave a draft after a few seconds of quiet — this is also the offline
-     story: the draft is already on the device before you decide anything. */
+  // 🔥 FIREBASE CORE SAVE FUNCTION (Create & Edit dono handle karega)
+  const handleFirebaseSave = async (isDraftStatus: boolean) => {
+    // Agar entryId pehle se hai toh wahi update karo, warna naya ID banao
+    const docRef = entryId ? doc(db, "journals", entryId) : doc(collection(db, "journals"));
+    const currentId = docRef.id;
+
+    const dataToSave = {
+      userId: myHandle,
+      title,
+      body,
+      mood: entryMood,
+      tags,
+      isDraft: isDraftStatus,
+      updatedAt: new Date().toISOString(),
+      // Agar naya bana rahe hain tabhi createdAt daalo
+      ...(!entryId && { createdAt: new Date().toISOString() }),
+    };
+
+    // Firebase pe save/update maro (merge: true se existing data overwrite nahi hota unnecessarily)
+    await setDoc(docRef, dataToSave, { merge: true });
+    
+    if (!entryId) setEntryId(currentId);
+    return currentId;
+  };
+
+  /* ---------------------- Autosave to Firebase ---------------------- */
   useEffect(() => {
     if (!dirty.current) return;
     if (!body.trim() && !title.trim()) return;
-    const t = window.setTimeout(() => {
-      const saved = saveJournal({
-        id: entryId,
-        title,
-        body,
-        mood: entryMood,
-        tags,
-        isDraft: true,
-      });
-      setEntryId(saved.id);
-      setSavedAt(new Date().toLocaleTimeString(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-      }));
-      dirty.current = false;
+    
+    const t = window.setTimeout(async () => {
+      try {
+        await handleFirebaseSave(true); // Autosave hamesha Draft banke save hoga
+        setSavedAt(new Date().toLocaleTimeString(undefined, {
+          hour: "numeric",
+          minute: "2-digit",
+        }));
+        dirty.current = false;
+      } catch (error) {
+        console.error("Autosave failed", error);
+      }
     }, 2500);
+    
     return () => window.clearTimeout(t);
-  }, [title, body, entryMood, tags, entryId, saveJournal]);
+  }, [title, body, entryMood, tags, entryId]); // removed local saveJournal dependency
 
   const mark = () => {
     dirty.current = true;
@@ -147,29 +176,32 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
     mark();
   };
 
-  const commit = (isDraft: boolean) => {
-    const saved = saveJournal({
-      id: entryId,
-      title,
-      body,
-      mood: entryMood,
-      tags,
-      isDraft,
-    });
-    setEntryId(saved.id);
-    dirty.current = false;
-    toast(
-      isDraft ? "Draft saved on this device" : "Entry saved",
-      "success",
-      "Nobody else can read it.",
-    );
-    router.push(`/student/journal/${saved.id}`);
+  /* ---------------------- Final Submit ---------------------- */
+  const commit = async (isDraft: boolean) => {
+    try {
+      await handleFirebaseSave(isDraft);
+      dirty.current = false;
+      toast(
+        isDraft ? "Draft saved to cloud ☁️" : "Entry securely saved ☁️",
+        "success"
+      );
+      router.push(`/student/journal`); // Save hote hi wapas Journal list pe
+    } catch (error) {
+      toast("Failed to save", "warning");
+    }
   };
 
-  const remove = () => {
-    if (entryId) deleteJournal(entryId);
+  /* ---------------------- Delete Entry ---------------------- */
+  const remove = async () => {
+    if (entryId) {
+      try {
+        await deleteDoc(doc(db, "journals", entryId));
+        toast("Entry deleted forever 🗑️", "info", "Erased from cloud database.");
+      } catch (error) {
+        toast("Failed to delete", "warning");
+      }
+    }
     setConfirmDelete(false);
-    toast("Entry deleted", "info", "Erased from this device.");
     router.push("/student/journal");
   };
 
@@ -179,17 +211,15 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
         <LockIndicator shared={entry?.sharedWithCounsellor} />
         <p className="muted text-xs" aria-live="polite">
           {savedAt
-            ? `Draft saved on this device at ${savedAt}`
-            : state.simulate.offline
-              ? "You're offline — drafts save to this device"
-              : "Saves to this device as you write"}
+            ? `Cloud draft saved at ${savedAt}`
+            : "Saves securely to cloud as you write"}
         </p>
       </div>
 
       <div className="rounded-2xl border border-info-200 bg-white p-4 sm:p-5">
         <p className="muted text-xs">
           {formatDay(isoDay(entry ? new Date(entry.createdAt) : new Date()))}
-          {entry?.isDraft ? " · draft" : ""}
+          {entry?.isDraft || !entry ? " · draft" : ""}
         </p>
 
         <input
@@ -326,7 +356,7 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
         tone="urgent"
         size="sm"
         title="Delete this entry?"
-        description="It is erased from this device. There is no copy anywhere else, so this cannot be undone."
+        description="It will be erased permanently from the cloud database. This cannot be undone."
         footer={
           <>
             <Button onClick={() => setConfirmDelete(false)}>Keep it</Button>
