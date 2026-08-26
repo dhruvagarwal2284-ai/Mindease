@@ -33,9 +33,11 @@ import type {
   MoodValue,
   PeerChatMessage,
   PeerChatSession,
+  PeerQueueItem,
   Post,
   ReactionKey,
   Reply,
+  Resource,
   SharedDataScope,
   SupportIndicator,
   SupportMode,
@@ -135,10 +137,18 @@ interface StoreValue {
   ) => void;
   claimModeration: (id: string) => void;
 
-  /* peer chat */
+  /* peer chat & queue */
   startPeerChat: () => PeerChatSession;
   sendPeerMessage: (body: string, sender?: "self" | "peer") => void;
   endPeerChat: () => void;
+  setPeerQueue: (queue: PeerQueueItem[] | ((prev: PeerQueueItem[]) => PeerQueueItem[])) => void;
+  addToPeerQueue: (item: PeerQueueItem) => void;
+  removeFromPeerQueue: (tabId: string) => void;
+  clearPeerQueue: () => void;
+
+  /* resources */
+  postResource: (resource: Resource) => void;
+  removeResource: (id: string) => void;
 
   /* notifications */
   markNotificationRead: (id: string) => void;
@@ -178,6 +188,7 @@ function migrate(raw: unknown): AppState {
     "appointments",
     "notifications",
     "blockedHandles",
+    "customResources",
   ] as const) {
     if (!Array.isArray(merged[key])) {
       (merged as Record<string, unknown>)[key] = base[key];
@@ -1118,6 +1129,61 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState((p) => ({ ...p, peerChat: null }));
   }, []);
 
+  /* ----------------------------------------------------------- peer queue */
+
+  const setPeerQueue = useCallback<StoreValue["setPeerQueue"]>((queue) => {
+    setState((p) => ({
+      ...p,
+      peerQueue: typeof queue === "function" ? queue(p.peerQueue ?? []) : queue,
+    }));
+  }, []);
+
+  const addToPeerQueue = useCallback<StoreValue["addToPeerQueue"]>((item) => {
+    setState((p) => {
+      const existing = p.peerQueue ?? [];
+      if (existing.some((x) => x.tabId === item.tabId)) return p;
+      return {
+        ...p,
+        peerQueue: [item, ...existing],
+      };
+    });
+  }, []);
+
+  const removeFromPeerQueue = useCallback<StoreValue["removeFromPeerQueue"]>((tabId) => {
+    setState((p) => ({
+      ...p,
+      peerQueue: (p.peerQueue ?? []).filter((x) => x.tabId !== tabId),
+    }));
+  }, []);
+
+  const clearPeerQueue = useCallback<StoreValue["clearPeerQueue"]>(() => {
+    setState((p) => ({ ...p, peerQueue: [] }));
+  }, []);
+
+  /* ------------------------------------------------------------ resources */
+
+  const postResource = useCallback<StoreValue["postResource"]>(
+    (resource) => {
+      setState((p) => ({
+        ...p,
+        customResources: [resource, ...(p.customResources ?? [])],
+      }));
+      toast("Resource posted", "success", "Students can now view and read this article in the library.");
+    },
+    [toast],
+  );
+
+  const removeResource = useCallback<StoreValue["removeResource"]>(
+    (id) => {
+      setState((p) => ({
+        ...p,
+        customResources: (p.customResources ?? []).filter((r) => r.id !== id),
+      }));
+      toast("Resource removed", "info", "Removed from the library.");
+    },
+    [toast],
+  );
+
   /* -------------------------------------------------------- demo plumbing */
 
   const setSimulate = useCallback((key: "aiDown" | "offline", value: boolean) => {
@@ -1204,6 +1270,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     startPeerChat,
     sendPeerMessage,
     endPeerChat,
+    setPeerQueue,
+    addToPeerQueue,
+    removeFromPeerQueue,
+    clearPeerQueue,
+    postResource,
+    removeResource,
     markNotificationRead,
     markAllRead,
     setSimulate,

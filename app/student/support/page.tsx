@@ -29,7 +29,7 @@ const STATUS_COPY: Record<CaseStatus, { label: string; tone: "info" | "amber" | 
 };
 
 function CaseCard({ kase }: { kase: CounsellingCase }) {
-  const { linkIdentity, withdrawCase, toast } = useStore();
+  const { state, linkIdentity, withdrawCase, toast } = useStore();
   const [reauth, setReauth] = useState(false);
   const shared = scopeSummary(kase.sharedScope);
   const withheld = withheldSummary(kase.sharedScope);
@@ -80,10 +80,16 @@ function CaseCard({ kase }: { kase: CounsellingCase }) {
           </p>
           <ul className="mt-1.5 space-y-1">
             {kase.offeredResourceIds.map((rid) => {
-              const r = resourceById(rid);
+              const r = resourceById(rid, state.customResources);
               return r ? (
                 <li key={rid} className="text-sm text-navy-800">
-                  {r.title} <span className="muted">· {r.minutes} min</span>
+                  <Link
+                    href={`/student/support/resources/${r.id}`}
+                    className="font-medium text-teal-800 hover:underline"
+                  >
+                    {r.title}
+                  </Link>{" "}
+                  <span className="muted">· {r.minutes} min</span>
                 </li>
               ) : null;
             })}
@@ -159,6 +165,12 @@ export default function SupportHubPage() {
   const [category, setCategory] = useState<string>("All");
   const [query, setQuery] = useState("");
 
+  const customResources = state.customResources ?? [];
+  const allResources = useMemo(
+    () => [...customResources, ...RESOURCES],
+    [customResources],
+  );
+
   const recentTags = useMemo(() => {
     const cutoff = isoDay(daysAgo(21));
     const set = new Set<string>();
@@ -170,14 +182,16 @@ export default function SupportHubPage() {
 
   const suggested = useMemo(
     () =>
-      state.consent.aiSupportAnalysis ? recommendResources(recentTags, 3).map((r) => r.id) : [],
-    [recentTags, state.consent.aiSupportAnalysis],
+      state.consent.aiSupportAnalysis
+        ? recommendResources(recentTags, 3, customResources).map((r) => r.id)
+        : [],
+    [recentTags, state.consent.aiSupportAnalysis, customResources],
   );
 
   if (!ready) return <SkeletonCard />;
 
-  const categories = ["All", ...new Set(RESOURCES.map((r) => r.category))];
-  const filtered = RESOURCES.filter((r) => {
+  const categories = ["All", ...new Set(allResources.map((r) => r.category))];
+  const filtered = allResources.filter((r) => {
     const inCat = category === "All" || r.category === category;
     const q = query.trim().toLowerCase();
     const inQuery =
@@ -243,7 +257,7 @@ export default function SupportHubPage() {
       <section aria-labelledby="resources">
         <SectionTitle
           title={<span id="resources">Find resources</span>}
-          subtitle="Short and practical. No sign-up, no tracking of what you opened."
+          subtitle="Short and practical. No sign-up, no tracking of what you opened. Click any resource to read the full article."
         />
 
         <div className="space-y-3">
@@ -274,23 +288,43 @@ export default function SupportHubPage() {
           <div className="mt-4 space-y-2.5">
             {filtered.map((r) => {
               const isSuggested = suggested.includes(r.id);
+              const isCustom = customResources.some((c) => c.id === r.id);
               return (
-                <article
+                <Link
                   key={r.id}
+                  href={`/student/support/resources/${r.id}`}
                   className={cx(
-                    "rounded-2xl border p-4",
-                    isSuggested ? "border-mint-200 bg-mint-50/50" : "border-navy-100 bg-white",
+                    "block rounded-2xl border p-4 transition-all hover:border-teal-300 hover:shadow-sm",
+                    isSuggested
+                      ? "border-mint-200 bg-mint-50/50"
+                      : isCustom
+                        ? "border-pro-200 bg-pro-50/30"
+                        : "border-navy-100 bg-white",
                   )}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <h3 className="font-medium text-navy-900">{r.title}</h3>
-                    {isSuggested ? <Badge tone="mint">Suggested for you</Badge> : null}
+                    <h3 className="font-medium text-navy-900 group-hover:text-teal-900">
+                      {r.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5">
+                      {isCustom ? (
+                        <Badge tone="pro">From counselling team</Badge>
+                      ) : null}
+                      {isSuggested ? (
+                        <Badge tone="mint">Suggested for you</Badge>
+                      ) : (
+                        <Badge tone="neutral">{r.minutes} min read</Badge>
+                      )}
+                    </div>
                   </div>
                   <p className="muted mt-0.5 text-xs">
                     {r.category} · {r.minutes} min read
                   </p>
-                  <p className="mt-2 text-sm text-navy-700">{r.summary}</p>
-                </article>
+                  <p className="mt-2 text-sm text-navy-700 leading-relaxed">{r.summary}</p>
+                  <p className="mt-3 text-xs font-semibold text-teal-800 flex items-center gap-1">
+                    Read article <span aria-hidden>→</span>
+                  </p>
+                </Link>
               );
             })}
           </div>

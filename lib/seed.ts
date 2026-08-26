@@ -762,6 +762,8 @@ export function emptyState(): AppState {
     notifications: [],
     blockedHandles: [],
     peerChat: null,
+    peerQueue: [],
+    customResources: [],
     simulate: { aiDown: false, offline: false },
   };
 }

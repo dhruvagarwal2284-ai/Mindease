@@ -234,6 +234,7 @@ export interface Alert {
 /* --------------------------------------------------- counselling requests */
 
 export const CONCERN_OPTIONS = [
+  "General support",
   "Academic stress",
   "Anxiety & stress",
   "Relationships",
@@ -302,8 +303,12 @@ export interface Resource {
   category: string;
   minutes: number;
   summary: string;
+  content?: string;
   /** concern tags used to recommend it */
   matches: string[];
+  /** author attribution if created by a counsellor */
+  author?: string;
+  createdAt?: string;
 }
 
 /* ---------------------------------------------------------- notifications */
@@ -345,6 +350,12 @@ export interface PeerChatSession {
   messages: PeerChatMessage[];
 }
 
+export interface PeerQueueItem {
+  handle: string;
+  tabId: string;
+  at: string;
+}
+
 export type PeerP2PSignal =
   | { type: "seeking"; handle: string; tabId: string; at: string }
   | { type: "supporting"; handle: string; tabId: string; at: string }
@@ -376,6 +387,10 @@ export interface AppState {
   dismissedPromptOn?: string;
   /** in-memory peer chat session, not persisted to localStorage */
   peerChat: PeerChatSession | null;
+  /** live queue of students waiting for peer support */
+  peerQueue: PeerQueueItem[];
+  /** custom articles authored by counsellors */
+  customResources: Resource[];
   /** simulated failure switches for the Security UX / failure-state demo */
   simulate: { aiDown: boolean; offline: boolean };
 }

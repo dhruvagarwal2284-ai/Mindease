@@ -360,7 +360,7 @@ export function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cx(
-        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:opacity-50",
+        "relative isolate inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:opacity-50",
         checked
           ? tone === "urgent"
             ? "border-urgent-600 bg-urgent-600"
@@ -566,7 +566,7 @@ export function Modal({
         : "border-t-4 border-t-teal-600";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/45 p-0 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-navy-950/45 p-0 sm:items-center sm:p-4">
       <button
         aria-label="Close"
         tabIndex={-1}
@@ -635,7 +635,7 @@ export function Drawer({
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-navy-950/45">
+    <div className="fixed inset-0 z-[100] flex justify-end bg-navy-950/45">
       <button aria-label="Close" className="flex-1 cursor-default" onClick={onClose} />
       <aside
         role="dialog"

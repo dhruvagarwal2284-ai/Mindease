@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   Badge,
   Button,
-  Callout,
   Card,
   Chip,
   EmptyState,
@@ -22,11 +21,10 @@ import { CONCERN_TAGS } from "@/lib/types";
 import type { Resource } from "@/lib/types";
 
 export default function CounsellorResourcesPage() {
-  const { ready, toast } = useStore();
+  const { ready, state, postResource, removeResource } = useStore();
 
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
-  const [drafts, setDrafts] = useState<Resource[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [pickedTags, setPickedTags] = useState<string[]>(["Academics", "Exams"]);
 
@@ -35,10 +33,12 @@ export default function CounsellorResourcesPage() {
     category: "",
     minutes: "5",
     summary: "",
+    content: "",
     matches: "",
   });
 
-  const all = useMemo(() => [...drafts, ...RESOURCES], [drafts]);
+  const customResources = state.customResources ?? [];
+  const all = useMemo(() => [...customResources, ...RESOURCES], [customResources]);
   const categories = useMemo(() => ["All", ...new Set(all.map((r) => r.category))], [all]);
 
   const filtered = all.filter((r) => {
@@ -52,28 +52,31 @@ export default function CounsellorResourcesPage() {
     return inCat && inQuery;
   });
 
-  const recommended = recommendResources(pickedTags, 4);
+  const recommended = recommendResources(pickedTags, 4, customResources);
 
   if (!ready) return <SkeletonCard />;
 
-  const isDraft = (r: Resource) => drafts.some((d) => d.id === r.id);
+  const isCustom = (r: Resource) => customResources.some((d) => d.id === r.id);
 
   const create = () => {
-    const draft: Resource = {
-      id: uid("draft"),
+    if (!form.title.trim() || !form.content.trim()) return;
+    const resource: Resource = {
+      id: uid("res"),
       title: form.title.trim(),
-      category: form.category.trim() || "Uncategorised",
+      category: form.category.trim() || "General",
       minutes: Number(form.minutes) || 5,
-      summary: form.summary.trim(),
+      summary: form.summary.trim() || form.content.trim().slice(0, 120) + "…",
+      content: form.content.trim(),
       matches: form.matches
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
+      author: "Campus Counselling Team",
+      createdAt: new Date().toISOString(),
     };
-    setDrafts((d) => [draft, ...d]);
+    postResource(resource);
     setShowCreate(false);
-    setForm({ title: "", category: "", minutes: "5", summary: "", matches: "" });
-    toast("Draft created", "info", "Not persisted — this prototype has no resource store.");
+    setForm({ title: "", category: "", minutes: "5", summary: "", content: "", matches: "" });
   };
 
   return (
@@ -84,7 +87,7 @@ export default function CounsellorResourcesPage() {
             Resource library
           </h1>
           <p className="muted mt-1 text-sm">
-            What you can offer a student from a case or a moderation decision.
+            What you can offer a student from a case or a moderation decision, and publish for campus reading.
           </p>
         </div>
         <Button tone="pro" onClick={() => setShowCreate(true)}>
@@ -120,47 +123,57 @@ export default function CounsellorResourcesPage() {
           />
         ) : (
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {filtered.map((r) => (
-              <article
-                key={r.id}
-                className={cx(
-                  "rounded-xl border p-4",
-                  isDraft(r) ? "border-dashed border-amber-300 bg-amber-50/50" : "border-navy-100",
-                )}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h2 className="font-medium text-navy-900">{r.title}</h2>
-                  {isDraft(r) ? (
-                    <Badge tone="amber">Draft — not persisted</Badge>
-                  ) : (
-                    <Badge tone="neutral">{r.minutes} min</Badge>
+            {filtered.map((r) => {
+              const custom = isCustom(r);
+              return (
+                <article
+                  key={r.id}
+                  className={cx(
+                    "rounded-xl border p-4 transition-colors",
+                    custom ? "border-pro-200 bg-pro-50/40" : "border-navy-100 bg-white",
                   )}
-                </div>
-                <p className="muted mt-0.5 text-xs">{r.category}</p>
-                <p className="mt-2 text-sm text-navy-700">{r.summary}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {r.matches.map((m) => (
-                    <span
-                      key={m}
-                      className="rounded-full bg-navy-50 px-2 py-0.5 text-xs text-navy-600"
-                    >
-                      {m}
-                    </span>
-                  ))}
-                </div>
-              </article>
-            ))}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <h2 className="font-medium text-navy-900">{r.title}</h2>
+                    <div className="flex items-center gap-1.5">
+                      {custom ? (
+                        <Badge tone="pro">Posted by counselling team</Badge>
+                      ) : (
+                        <Badge tone="neutral">{r.minutes} min</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <p className="muted mt-0.5 text-xs">
+                    {r.category} · {r.minutes} min read
+                  </p>
+                  <p className="mt-2 text-sm text-navy-700 leading-relaxed">{r.summary}</p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.matches.map((m) => (
+                        <span
+                          key={m}
+                          className="rounded-full bg-navy-50 px-2 py-0.5 text-xs text-navy-600 border border-navy-100"
+                        >
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                    {custom ? (
+                      <button
+                        type="button"
+                        onClick={() => removeResource(r.id)}
+                        className="text-xs font-medium text-urgent-700 hover:text-urgent-900 hover:underline"
+                      >
+                        Remove article
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </Card>
-
-      {drafts.length ? (
-        <Callout tone="amber" icon="⚠️" title="Drafts live only in this browser tab">
-          This prototype has no resource store, so newly created resources are not saved.
-          They disappear on reload — shown here so the workflow is visible, not to pretend
-          it persists.
-        </Callout>
-      ) : null}
 
       {/* ------------------------------------------------ recommendations */}
       <Card className="p-4 sm:p-5">
@@ -221,14 +234,18 @@ export default function CounsellorResourcesPage() {
       <Modal
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        title="Create a resource"
+        title="Post a resource article"
         tone="pro"
-        description="Drafted locally — this prototype does not persist resources."
+        description="This article will be immediately available for students to read in the library and recommendations."
         footer={
           <>
             <Button onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button tone="pro" disabled={!form.title.trim()} onClick={create}>
-              Create draft
+            <Button
+              tone="pro"
+              disabled={!form.title.trim() || !form.content.trim()}
+              onClick={create}
+            >
+              Post resource
             </Button>
           </>
         }
@@ -239,6 +256,7 @@ export default function CounsellorResourcesPage() {
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="e.g. Sleeping through submission season"
+              required
             />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -260,10 +278,23 @@ export default function CounsellorResourcesPage() {
           </div>
           <Field label="Summary">
             <Textarea
-              rows={3}
+              rows={2}
               value={form.summary}
               onChange={(e) => setForm({ ...form, summary: e.target.value })}
-              placeholder="One or two sentences a student would actually read."
+              placeholder="One or two sentences summarizing the article."
+            />
+          </Field>
+          <Field
+            label="Full article content"
+            required
+            hint="Paragraphs and actionable guidance students can read."
+          >
+            <Textarea
+              rows={6}
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              placeholder="Write the full article content here..."
+              required
             />
           </Field>
           <Field
