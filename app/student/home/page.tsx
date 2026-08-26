@@ -35,9 +35,9 @@ const QUICK_ACTIONS: {
   className: string;
 }[] = [
   {
-    href: "/student/support/request",
+    href: "/student/support/connect",
     label: "Talk to someone",
-    body: "Ask a campus counsellor for a conversation, on your terms.",
+    body: "Chat anonymously with a peer who gets it.",
     icon: "🤝",
     className:
       "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-300 hover:bg-teal-100/70",
@@ -120,9 +120,6 @@ export default function StudentHomePage() {
         <h1 className="text-2xl font-semibold tracking-tight text-navy-900">
           {state.identity?.handle ?? "MindMate"}
         </h1>
-        <p className="muted mt-1 text-sm">
-          What support could you use right now? Nothing here is compulsory.
-        </p>
         <AnonymousModeBar className="mt-3" />
       </header>
 
@@ -183,7 +180,7 @@ export default function StudentHomePage() {
               Your mood pattern
             </h2>
             <p className="muted mt-0.5 text-sm">
-              Your own check-ins, kept on this device. Not a score, not a rating.
+              Private to this device.
             </p>
           </div>
           <Link
@@ -201,8 +198,7 @@ export default function StudentHomePage() {
             </p>
             <p className="mt-1 font-medium text-navy-900">Nothing to show yet</p>
             <p className="muted mx-auto mt-1 max-w-sm text-sm">
-              Two check-ins are enough to start seeing a shape. There is no streak to
-              keep and nothing to catch up on.
+              Complete two check-ins to see a pattern here.
             </p>
           </div>
         ) : (
@@ -228,11 +224,9 @@ export default function StudentHomePage() {
             <p className="muted mt-0.5 text-sm">
               {analysisOn
                 ? recentTags.length
-                  ? `Picked from the topics you tapped recently: ${recentTags
-                      .slice(0, 3)
-                      .join(", ")}.`
-                  : "A place to start until you tell us more."
-                : "Support analysis is off, so this is just the general shelf."}
+                  ? "Based on your recent check-ins."
+                  : null
+                : "General resources — analysis is off."}
             </p>
           </div>
         </div>
@@ -306,10 +300,6 @@ export default function StudentHomePage() {
             );
           })}
         </ul>
-        <p className="mt-2.5 text-xs text-info-900/80">
-          Everything above runs in this browser. Nothing is shared with a counsellor
-          until you ask for it and confirm exactly what goes.
-        </p>
       </section>
     </div>
   );
