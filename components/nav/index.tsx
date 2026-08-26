@@ -432,6 +432,114 @@ export function StudentBottomNav() {
   );
 }
 
+// export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
+//   const pathname = usePathname();
+//   const { state, setSupportMode, toast } = useStore();
+
+//   return (
+//     <div className="flex h-full flex-col">
+//       <div className="px-5 py-5">
+//         <MindEaseLogo href="/student/home" size="md" subtitle="Student Portal" />
+//       </div>
+
+//       <nav aria-label="Student sections" className="flex-1 px-3">
+//         <ul className="space-y-1">
+//           {getStudentTabs(state.supportMode).map ((t)=> {
+//             const active = pathname.startsWith(t.href);
+//             return (
+//               <li key={t.href}>
+//                 <Link
+//                   href={t.href}
+//                   onClick={onNavigate}
+//                   aria-current={active ? "page" : undefined}
+//                   className={cx(
+//                     "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
+//                     active
+//                       ? t.urgent
+//                         ? "bg-urgent-100 text-urgent-900 font-semibold"
+//                         : "bg-teal-100 text-teal-900 font-semibold"
+//                       : t.urgent
+//                         ? "text-urgent-700 hover:bg-urgent-50"
+//                         : "text-navy-600 hover:bg-navy-100 hover:text-navy-900",
+//                   )}
+//                 >
+//                   <span aria-hidden className="w-5 text-center text-base">
+//                     {t.icon}
+//                   </span>
+//                   <span className="flex-1">{t.label}</span>
+//                 </Link>
+//               </li>
+//             );
+//           })}
+//         </ul>
+//       </nav>
+
+//       <div className="border-t border-navy-100 px-4 py-4 space-y-3">
+//         <div className="flex items-center justify-between">
+//           <div className="min-w-0 flex-1">
+//             <p className="truncate text-xs font-mono font-semibold text-navy-900">
+//               {state.identity?.handle ?? "MindMate"}
+//             </p>
+//             <p className="text-[11px] text-navy-500 flex items-center gap-1.5 mt-0.5">
+//               <span
+//                 className={cx(
+//                   "h-1.5 w-1.5 rounded-full",
+//                   state.supportMode === "supporting" ? "bg-mint-500" : "bg-teal-500",
+//                 )}
+//                 aria-hidden
+//               />
+//               Currently:{" "}
+//               <strong className="font-medium text-navy-700">
+//                 {state.supportMode === "supporting" ? "Peer supporter" : "Seeking support"}
+//               </strong>
+//             </p>
+//           </div>
+//           <div className="flex items-center gap-0.5 shrink-0">
+//             <NotificationBell audience="student" />
+//             <Link
+//               href="/student/settings"
+//               onClick={onNavigate}
+//               aria-label="Settings"
+//               className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-navy-100 transition-colors"
+//             >
+//               <span aria-hidden className="text-base">⚙️</span>
+//             </Link>
+//           </div>
+//         </div>
+
+//         <button
+//           type="button"
+//           onClick={() => {
+//             const next = state.supportMode === "supporting" ? "seeking" : "supporting";
+//             setSupportMode(next);
+//             toast(
+//               next === "supporting" ? "Switched to Peer Supporter" : "Switched to Seeking Support",
+//               "info",
+//               next === "supporting"
+//                 ? "You are now available to chat with peers who need support."
+//                 : "You are now in student mode looking for resources or support.",
+//             );
+//           }}
+//           className="w-full text-left flex items-center justify-between rounded-xl border border-navy-200 bg-navy-50/70 hover:bg-navy-100 px-2.5 py-1.5 text-xs text-navy-700 transition-colors cursor-pointer"
+//         >
+//           <span>Switch to {state.supportMode === "supporting" ? "Seeking mode" : "Supporting mode"}</span>
+//           <span className="font-semibold text-teal-800" aria-hidden>⇄</span>
+//         </button>
+
+//         <div className="pt-0.5">
+//           <Link
+//             href="/"
+//             onClick={onNavigate}
+//             className="inline-block text-xs font-medium text-teal-800 hover:underline"
+//           >
+//             Switch role / sign out
+//           </Link>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
 export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { state, setSupportMode, toast } = useStore();
@@ -474,7 +582,30 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
         </ul>
       </nav>
 
-      <div className="border-t border-navy-100 px-4 py-4 space-y-3">
+      {/* 🔥 YAHAN CHANGE HUA HAI: BOTTOM FOOTER AREA */}
+      <div className="border-t border-navy-100 px-4 py-4 space-y-4">
+        
+        {/* 1. SWITCH BUTTON (Ab Upar Aa Gaya) */}
+        <button
+          type="button"
+          onClick={() => {
+            const next = state.supportMode === "supporting" ? "seeking" : "supporting";
+            setSupportMode(next);
+            toast(
+              next === "supporting" ? "Switched to Peer Supporter" : "Switched to Seeking Support",
+              "info",
+              next === "supporting"
+                ? "You are now available to chat with peers who need support."
+                : "You are now in student mode looking for resources or support.",
+            );
+          }}
+          className="w-full text-left flex items-center justify-between rounded-xl border border-navy-200 bg-navy-50/70 hover:bg-navy-100 px-3 py-2 text-xs font-medium text-navy-800 transition-colors cursor-pointer"
+        >
+          <span>Switch to {state.supportMode === "supporting" ? "Seeking mode" : "Supporting mode"}</span>
+          <span className="font-bold text-teal-800 text-sm" aria-hidden>⇄</span>
+        </button>
+
+        {/* 2. PROFILE WALA BLOCK (Ab Niche Aa Gaya) */}
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-mono font-semibold text-navy-900">
@@ -507,26 +638,7 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            const next = state.supportMode === "supporting" ? "seeking" : "supporting";
-            setSupportMode(next);
-            toast(
-              next === "supporting" ? "Switched to Peer Supporter" : "Switched to Seeking Support",
-              "info",
-              next === "supporting"
-                ? "You are now available to chat with peers who need support."
-                : "You are now in student mode looking for resources or support.",
-            );
-          }}
-          className="w-full text-left flex items-center justify-between rounded-xl border border-navy-200 bg-navy-50/70 hover:bg-navy-100 px-2.5 py-1.5 text-xs text-navy-700 transition-colors cursor-pointer"
-        >
-          <span>Switch to {state.supportMode === "supporting" ? "Seeking mode" : "Supporting mode"}</span>
-          <span className="font-semibold text-teal-800" aria-hidden>⇄</span>
-        </button>
-
-        <div className="pt-0.5">
+        <div className="pt-1">
           <Link
             href="/"
             onClick={onNavigate}

@@ -32,8 +32,7 @@ type TabKey =
   | "notifications"
   | "blocked"
   | "access"
-  | "data"
-  | "prototype";
+  | "data";
 
 const TABS: { value: TabKey; label: string }[] = [
   { value: "profile", label: "Profile" },
@@ -42,7 +41,6 @@ const TABS: { value: TabKey; label: string }[] = [
   { value: "blocked", label: "Blocked & hidden" },
   { value: "access", label: "Accessibility" },
   { value: "data", label: "Your data" },
-  { value: "prototype", label: "Prototype" },
 ];
 
 const STORAGE_ROWS: {
@@ -714,89 +712,6 @@ export default function StudentSettingsPage() {
           PROTOTYPE
       ========================================================= */}
 
-      {tab === "prototype" ? (
-        <section className="rounded-2xl border-2 border-dashed border-navy-300 bg-white p-4 sm:p-5">
-
-          <p className="mb-3 inline-block rounded-full bg-navy-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-            Prototype controls
-          </p>
-
-          <p className="muted text-sm">
-            These would not exist in a real deployment. They are here so the
-            failure states and the demo reset can be shown on demand.
-          </p>
-
-          <div className="mt-4 space-y-2.5">
-
-            <div className="flex items-start justify-between gap-4 rounded-xl border border-navy-100 p-4">
-              <div>
-                <p className="font-medium text-navy-900">
-                  Simulate: AI unavailable
-                </p>
-
-                <p className="muted mt-0.5 text-sm">
-                  Surfaces &ldquo;Support analysis is temporarily unavailable.
-                  Your private journal remains available.&rdquo;
-                </p>
-              </div>
-
-              <Toggle
-                checked={state.simulate.aiDown}
-                onChange={(v) =>
-                  setSimulate("aiDown", v)
-                }
-                label="Simulate AI unavailable"
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4 rounded-xl border border-navy-100 p-4">
-              <div>
-                <p className="font-medium text-navy-900">
-                  Simulate: offline
-                </p>
-
-                <p className="muted mt-0.5 text-sm">
-                  Surfaces &ldquo;You&rsquo;re offline. Your private draft has
-                  been saved locally.&rdquo;
-                </p>
-              </div>
-
-              <Toggle
-                checked={state.simulate.offline}
-                onChange={(v) =>
-                  setSimulate("offline", v)
-                }
-                label="Simulate offline"
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              onClick={() =>
-                setResetConfirm("seeded")
-              }
-            >
-              Reset with demo history
-            </Button>
-
-            <Button
-              onClick={() =>
-                setResetConfirm("empty")
-              }
-            >
-              Reset to an empty account
-            </Button>
-
-            <Link
-              href="/demo"
-              className="inline-flex min-h-11 items-center text-sm font-medium text-teal-800 hover:underline"
-            >
-              Open the demo script →
-            </Link>
-          </div>
-        </section>
-      ) : null}
 
       {/* =========================================================
           REAUTH DIALOG
@@ -973,51 +888,6 @@ export default function StudentSettingsPage() {
       {/* =========================================================
           RESET MODAL
       ========================================================= */}
-
-      <Modal
-        open={resetConfirm !== null}
-        onClose={() => setResetConfirm(null)}
-        size="sm"
-        title={
-          resetConfirm === "seeded"
-            ? "Reset with demo history?"
-            : "Reset to an empty account?"
-        }
-        description={
-          resetConfirm === "seeded"
-            ? "Restores four weeks of check-ins so the longitudinal support indicator has something to show."
-            : "Starts from nothing: no check-ins, no journal, no history."
-        }
-        footer={
-          <>
-            <Button
-              onClick={() =>
-                setResetConfirm(null)
-              }
-            >
-              Cancel
-            </Button>
-
-            <Button
-              tone="primary"
-              onClick={() => {
-                if (resetConfirm) {
-                  resetAll(resetConfirm);
-                }
-
-                setResetConfirm(null);
-
-                toast(
-                  "Reset complete",
-                  "success",
-                );
-              }}
-            >
-              Reset
-            </Button>
-          </>
-        }
-      />
 
       {/* =========================================================
           EMPTY BLOCKED STATE
