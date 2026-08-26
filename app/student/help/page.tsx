@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Inter } from "next/font/google";
 import { Button, Callout, Field, Input, SkeletonCard } from "@/components/ui";
 import { cx } from "@/lib/format";
 import { CRISIS_CONTACTS } from "@/lib/resources";
 import { useStore } from "@/lib/store";
 import type { CrisisContact } from "@/lib/resources";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 const GROUNDING = [
   {
@@ -61,7 +67,13 @@ export default function HelpPage() {
 
   const toggle = (key: string) => setOpen((o) => (o === key ? null : key));
 
-  const Panel = ({ id, children }: { id: string; children: React.ReactNode }) =>
+  const Panel = ({
+    id,
+    children,
+  }: {
+    id: string;
+    children: React.ReactNode;
+  }) =>
     open === id ? (
       <div className="animate-fade-up mt-2 rounded-2xl border border-navy-100 bg-navy-50/60 p-4">
         {children}
@@ -93,9 +105,8 @@ export default function HelpPage() {
           : "border-navy-200 bg-white hover:border-navy-300 hover:bg-navy-50",
       )}
     >
-      <span className="text-2xl" aria-hidden>
-        {icon}
-      </span>
+      <span className="text-2xl" aria-hidden>{icon}</span>
+
       <span className="min-w-0 flex-1">
         <span
           className={cx(
@@ -105,8 +116,10 @@ export default function HelpPage() {
         >
           {label}
         </span>
+
         <span className="muted block text-sm">{sub}</span>
       </span>
+
       <span className="muted shrink-0 text-sm" aria-hidden>
         {open === id ? "▲" : "›"}
       </span>
@@ -114,14 +127,16 @@ export default function HelpPage() {
   );
 
   return (
-    <div className="space-y-5">
+    <div className={`${inter.className} space-y-5`}>
       <header>
         <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-urgent-700 uppercase">
           <span aria-hidden>🆘</span> Get help
         </p>
+
         <h1 className="mt-1.5 text-3xl font-semibold tracking-tight text-navy-900">
           Need immediate support?
         </h1>
+
         <p className="muted mt-2 text-base">
           You do not have to be in crisis to be here. Pick whichever of these is the
           smallest step you can take right now.
@@ -138,18 +153,19 @@ export default function HelpPage() {
           href="/student/support/request"
           className="flex min-h-16 w-full items-center gap-4 rounded-2xl border border-teal-300 bg-teal-50 px-4 py-3 text-left transition-colors hover:bg-teal-100"
         >
-          <span className="text-2xl" aria-hidden>
-            🤝
-          </span>
+          <span className="text-2xl" aria-hidden>🤝</span>
+
           <span className="min-w-0 flex-1">
-            <span className="block font-semibold text-teal-900">Talk to someone now</span>
+            <span className="block font-semibold text-teal-900">
+              Talk to someone now
+            </span>
+
             <span className="muted block text-sm">
               Ask a campus counsellor for a conversation. You choose what they see.
             </span>
           </span>
-          <span className="muted shrink-0 text-sm" aria-hidden>
-            ›
-          </span>
+
+          <span className="muted shrink-0 text-sm" aria-hidden>›</span>
         </Link>
 
         <ActionButton
@@ -160,6 +176,7 @@ export default function HelpPage() {
           urgent
           onClick={() => toggle("emergency")}
         />
+
         <Panel id="emergency">
           <ContactList contacts={CRISIS_CONTACTS.filter((c) => c.kind === "national")} />
           <p className="muted mt-3 text-xs">
@@ -176,6 +193,7 @@ export default function HelpPage() {
           sub="The counselling centre and the out-of-hours warden."
           onClick={() => toggle("campus")}
         />
+
         <Panel id="campus">
           <ContactList contacts={CRISIS_CONTACTS.filter((c) => c.kind === "campus")} />
         </Panel>
@@ -187,6 +205,7 @@ export default function HelpPage() {
           sub="Things that help in the next ten minutes."
           onClick={() => toggle("grounding")}
         />
+
         <Panel id="grounding">
           <ol className="space-y-3">
             {GROUNDING.map((g, i) => (
@@ -194,6 +213,7 @@ export default function HelpPage() {
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-navy-700">
                   {i + 1}
                 </span>
+
                 <div>
                   <p className="text-sm font-medium text-navy-900">{g.title}</p>
                   <p className="muted mt-0.5 text-sm">{g.body}</p>
@@ -210,6 +230,7 @@ export default function HelpPage() {
           sub="Keep one number where you can find it without thinking."
           onClick={() => toggle("trusted")}
         />
+
         <Panel id="trusted">
           <div className="space-y-3">
             <Field label="Their name">
@@ -219,6 +240,7 @@ export default function HelpPage() {
                 placeholder="Someone you would actually call"
               />
             </Field>
+
             <Field label="Their number">
               <Input
                 value={trustedNumber}
@@ -227,17 +249,22 @@ export default function HelpPage() {
                 inputMode="tel"
               />
             </Field>
+
             <Callout tone="info" icon="🔒">
               This stays in this browser tab only. This prototype deliberately does not save
               it anywhere — not to your account, not to a server, not even to this device
               between visits.
             </Callout>
+
             {trustedName && trustedNumber ? (
               <div className="rounded-xl border border-mint-200 bg-mint-50 p-3.5">
                 <p className="text-sm font-medium text-mint-900">
                   If it gets bad, call {trustedName}
                 </p>
-                <p className="mt-0.5 font-mono text-lg text-navy-900">{trustedNumber}</p>
+
+                <p className="mt-0.5 font-mono text-lg text-navy-900">
+                  {trustedNumber}
+                </p>
               </div>
             ) : null}
           </div>
@@ -250,11 +277,13 @@ export default function HelpPage() {
           }}
           className="flex min-h-16 w-full items-center gap-4 rounded-2xl border border-mint-300 bg-mint-50 px-4 py-3 text-left transition-colors hover:bg-mint-100"
         >
-          <span className="text-2xl" aria-hidden>
-            🌤️
-          </span>
+          <span className="text-2xl" aria-hidden>🌤️</span>
+
           <span className="min-w-0 flex-1">
-            <span className="block font-semibold text-mint-900">I am safe right now</span>
+            <span className="block font-semibold text-mint-900">
+              I am safe right now
+            </span>
+
             <span className="muted block text-sm">
               Just checking in on this page. Nothing more needed.
             </span>
@@ -263,16 +292,23 @@ export default function HelpPage() {
 
         {safeAck ? (
           <div className="animate-fade-up rounded-2xl border border-mint-200 bg-white p-4">
-            <p className="font-medium text-navy-900">Good. That is genuinely worth saying.</p>
+            <p className="font-medium text-navy-900">
+              Good. That is genuinely worth saying.
+            </p>
+
             <p className="muted mt-1 text-sm">
               This page is here whenever you want it, and looking at it costs you nothing.
               Nothing has been logged and nobody has been told you opened it.
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+
+            <div className={`${inter.className} space-y-5`}>
               <Button tone="primary" onClick={() => router.push("/student/home")}>
                 Back to home
               </Button>
-              <Button onClick={() => setSafeAck(false)}>Stay here a minute</Button>
+
+              <Button onClick={() => setSafeAck(false)}>
+                Stay here a minute
+              </Button>
             </div>
           </div>
         ) : null}

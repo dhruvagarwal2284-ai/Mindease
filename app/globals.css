@@ -20,6 +20,20 @@ body {
   min-height: 100dvh;
 }
 
+/* Font preview variants: add ?font=modern, ?font=editorial, or ?font=friendly
+   to any screen URL. The default is a calm, highly legible Avenir Next stack. */
+html[data-font="modern"] {
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+html[data-font="editorial"] {
+  --font-sans: Georgia, "Times New Roman", serif;
+}
+
+html[data-font="friendly"] {
+  --font-sans: "Trebuchet MS", "Avenir Next", Arial, sans-serif;
+}
+
 /* Scalable typography — the accessibility panel toggles this on <html>. */
 html[data-text="large"] {
   font-size: 118%;
@@ -147,4 +161,151 @@ html[data-motion="reduced"] *::after {
   .no-print {
     display: none !important;
   }
+}
+/* ================================================================
+   MINDEASE THEMES
+   ================================================================ */
+
+/* 🌊 Ocean Calm - default */
+html[data-theme="ocean"] {
+  --color-canvas: #f7f9fb;
+  --color-surface: #ffffff;
+
+  --color-navy-50: #f2f6fa;
+  --color-navy-100: #e2ebf3;
+  --color-navy-200: #c3d5e6;
+  --color-navy-300: #93b2cd;
+  --color-navy-500: #3a6690;
+  --color-navy-700: #234161;
+  --color-navy-900: #122135;
+
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #cdfaf1;
+  --color-teal-200: #9bf3e4;
+  --color-teal-300: #61e5d3;
+  --color-teal-500: #14b0a3;
+  --color-teal-700: #0f716c;
+  --color-teal-800: #115a57;
+
+  --color-ink-muted: #556575;
+}
+
+/* 🌿 Sage */
+html[data-theme="sage"] {
+  --color-canvas: #f4f8f3;
+  --color-surface: #ffffff;
+
+  --color-navy-50: #f0f6f0;
+  --color-navy-100: #dcebdd;
+  --color-navy-200: #bdd6bf;
+  --color-navy-300: #91b997;
+  --color-navy-500: #4f8060;
+  --color-navy-700: #31583d;
+  --color-navy-900: #1f3d2a;
+
+  --color-teal-50: #edf8f0;
+  --color-teal-100: #d5edd9;
+  --color-teal-200: #addab6;
+  --color-teal-300: #80c18d;
+  --color-teal-500: #4d9f61;
+  --color-teal-700: #347647;
+  --color-teal-800: #285d38;
+
+  --color-ink-muted: #58705e;
+}
+
+/* 🌸 Lavender */
+html[data-theme="lavender"] {
+  --color-canvas: #f8f6fc;
+  --color-surface: #ffffff;
+
+  --color-navy-50: #f5f2fa;
+  --color-navy-100: #e9e2f4;
+  --color-navy-200: #d3c5e8;
+  --color-navy-300: #b7a3d5;
+  --color-navy-500: #8063a8;
+  --color-navy-700: #584276;
+  --color-navy-900: #36264e;
+
+  --color-teal-50: #f3effb;
+  --color-teal-100: #e5daf7;
+  --color-teal-200: #cdb7ed;
+  --color-teal-300: #b294df;
+  --color-teal-500: #8b6bc0;
+  --color-teal-700: #684c99;
+  --color-teal-800: #553e7d;
+
+  --color-ink-muted: #686075;
+}
+
+/* 🌅 Warm Sunset */
+html[data-theme="sunset"] {
+  --color-canvas: #fff8f3;
+  --color-surface: #ffffff;
+
+  --color-navy-50: #fff5ef;
+  --color-navy-100: #f8e3d6;
+  --color-navy-200: #edc5b0;
+  --color-navy-300: #dca083;
+  --color-navy-500: #ad6747;
+  --color-navy-700: #7b4632;
+  --color-navy-900: #4a2920;
+
+  --color-teal-50: #fff3e8;
+  --color-teal-100: #ffe2ca;
+  --color-teal-200: #ffc49c;
+  --color-teal-300: #ffa66e;
+  --color-teal-500: #e8783f;
+  --color-teal-700: #bd552d;
+  --color-teal-800: #994526;
+
+  --color-ink-muted: #786257;
+}
+
+/* 🌙 Midnight */
+html[data-theme="midnight"] {
+  --color-canvas: #0c1624;
+  --color-surface: #142235;
+
+  --color-navy-50: #1c2c40;
+  --color-navy-100: #263a51;
+  --color-navy-200: #344d66;
+  --color-navy-300: #48627b;
+  --color-navy-500: #7395b5;
+  --color-navy-700: #a7c0d8;
+  --color-navy-900: #edf5fc;
+
+  --color-teal-50: #123a3a;
+  --color-teal-100: #164d4b;
+  --color-teal-200: #1d6863;
+  --color-teal-300: #299b91;
+  --color-teal-500: #45cfc2;
+  --color-teal-700: #70e2d7;
+  --color-teal-800: #91ebe2;
+
+  --color-ink-muted: #b1c1d0;
+}
+
+/* 🧊 Minimal */
+html[data-theme="minimal"] {
+  --color-canvas: #fafafa;
+  --color-surface: #ffffff;
+
+  --color-navy-50: #f7f7f7;
+  --color-navy-100: #e8e8e8;
+  --color-navy-200: #d2d2d2;
+  --color-navy-300: #b5b5b5;
+  --color-navy-500: #707070;
+  --color-navy-700: #404040;
+  --color-navy-900: #181818;
+
+  --color-teal-50: #f3f8f7;
+  --color-teal-100: #e0efed;
+  --color-teal-200: #c1dfdb;
+  --color-teal-300: #96c9c3;
+  --color-teal-500: #4c9189;
+  --color-teal-700: #356e68;
+  --color-teal-800: #2c5c57;
+
+  --color-ink-muted: #666666;
 }

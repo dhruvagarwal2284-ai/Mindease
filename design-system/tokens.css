@@ -10,9 +10,9 @@
  */
 
 @theme {
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+ --font-sans:
+  "Nunito", sans-serif;
+
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
 
   /* Primary / trust — deep navy */
