@@ -208,8 +208,11 @@ export default function SupportHubPage() {
           withdraw at any point.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <LinkButton href="/student/support/request" tone="primary">
-            Talk to someone
+          <LinkButton href="/student/peer" tone="primary">
+            Talk to a peer now
+          </LinkButton>
+          <LinkButton href="/student/support/request">
+            Book a counsellor
           </LinkButton>
           <LinkButton href="/student/support/appointments">My appointments</LinkButton>
         </div>

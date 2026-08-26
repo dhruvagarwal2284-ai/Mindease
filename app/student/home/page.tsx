@@ -35,10 +35,10 @@ const QUICK_ACTIONS: {
   className: string;
 }[] = [
   {
-    href: "/student/support/connect",
+    href: "/student/peer",
     label: "Talk to someone",
-    body: "Chat anonymously with a peer who gets it.",
-    icon: "🤝",
+    body: "Chat anonymously with a peer, one-to-one, right now.",
+    icon: "💬",
     className:
       "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-300 hover:bg-teal-100/70",
   },
@@ -57,6 +57,14 @@ const QUICK_ACTIONS: {
     icon: "🧭",
     className:
       "border-mint-200 bg-mint-50 text-mint-900 hover:border-mint-300 hover:bg-mint-100/70",
+  },
+  {
+    href: "/student/support/request",
+    label: "Book a counsellor",
+    body: "Schedule a formal appointment with campus counselling.",
+    icon: "🤝",
+    className:
+      "border-pro-200 bg-pro-50 text-pro-900 hover:border-pro-300 hover:bg-pro-100/70",
   },
   {
     href: "/student/help",
@@ -146,7 +154,7 @@ export default function StudentHomePage() {
         >
           What would help right now?
         </h2>
-        <ul className="grid grid-cols-2 gap-3">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {QUICK_ACTIONS.map((a) => (
             <li key={a.href}>
               <Link

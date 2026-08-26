@@ -329,6 +329,8 @@ export interface A11ySettings {
 
 /* ----------------------------------------------------------- peer chat */
 
+export type SupportRoleMode = "seeking" | "supporting";
+
 export interface PeerChatMessage {
   id: string;
   sender: "self" | "peer";
@@ -343,11 +345,20 @@ export interface PeerChatSession {
   messages: PeerChatMessage[];
 }
 
+export type PeerP2PSignal =
+  | { type: "seeking"; handle: string; tabId: string; at: string }
+  | { type: "supporting"; handle: string; tabId: string; at: string }
+  | { type: "match"; seekerTabId: string; seekerHandle: string; supporterTabId: string; supporterHandle: string; matchId: string }
+  | { type: "message"; matchId: string; id: string; senderTabId: string; senderHandle: string; body: string; at: string }
+  | { type: "leave"; matchId: string; senderTabId: string; senderHandle: string };
+
 /* -------------------------------------------------------------- app state */
 
 export interface AppState {
   onboarded: boolean;
   identity: AnonymousIdentity | null;
+  /** Role mode: seeking support (default) or supporting other students as a peer */
+  supportMode: SupportRoleMode;
   consent: ConsentSettings;
   a11y: A11ySettings;
   checkIns: CheckIn[];

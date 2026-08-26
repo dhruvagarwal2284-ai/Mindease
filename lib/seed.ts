@@ -747,6 +747,7 @@ export function emptyState(): AppState {
   return {
     onboarded: false,
     identity: null,
+    supportMode: "seeking",
     consent: { ...DEFAULT_CONSENT },
     a11y: { highContrast: false, reducedMotion: false, largeText: false },
     checkIns: [],
