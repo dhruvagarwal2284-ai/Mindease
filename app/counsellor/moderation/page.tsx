@@ -564,7 +564,7 @@ export default function ModerationPage() {
                 }
               >
                 <option value="">No resource attached</option>
-                {RESOURCES.map((r) => (
+                {[...(state.customResources ?? []), ...RESOURCES].map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.title} · {r.category} · {r.minutes} min
                   </option>

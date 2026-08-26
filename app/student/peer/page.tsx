@@ -17,9 +17,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge, Button } from "@/components/ui";
-import { cx, formatTime, uid } from "@/lib/format";
+import { cx, formatTime, relativeTime, uid } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import type { PeerP2PSignal, SupportRoleMode } from "@/lib/types";
+import type { PeerP2PSignal, PeerQueueItem, SupportRoleMode } from "@/lib/types";
 
 const CHANNEL_NAME = "mindease_peer_p2p_v2";
 
@@ -43,7 +43,13 @@ interface ChatMessage {
 }
 
 export default function PeerChatPage() {
-  const { ready, state, toast } = useStore();
+  const {
+    ready,
+    state,
+    addToPeerQueue,
+    removeFromPeerQueue,
+    toast,
+  } = useStore();
 
   // Tab-specific ID and local mode so two tabs on the same browser can test opposite roles
   const tabId = useRef(uid("tab")).current;
@@ -83,29 +89,18 @@ export default function PeerChatPage() {
     (signal: PeerP2PSignal) => {
       if (!signal || typeof signal !== "object") return;
 
-      // 1. Supporter sees Seeker broadcast -> initiates match
+      // 1. Supporter sees Seeker broadcast -> add to queue rather than auto-match
       if (
         status === "waiting" &&
         localMode === "supporting" &&
         signal.type === "seeking" &&
         signal.tabId !== tabId
       ) {
-        const newMatchId = uid("match");
-        const matchMsg: PeerP2PSignal = {
-          type: "match",
-          seekerTabId: signal.tabId,
-          seekerHandle: signal.handle,
-          supporterTabId: tabId,
-          supporterHandle: myHandle,
-          matchId: newMatchId,
-        };
-        channelRef.current?.postMessage(matchMsg);
-
-        setMatchedPeer(signal.handle);
-        setMatchId(newMatchId);
-        setIsSimulated(false);
-        setStatus("matched");
-        toast("Connected to live peer!", "success", `You are now chatting with ${signal.handle}.`);
+        addToPeerQueue({
+          handle: signal.handle,
+          tabId: signal.tabId,
+          at: signal.at,
+        });
       }
 
       // 2. Seeker receives Match confirmation from Supporter
@@ -122,7 +117,25 @@ export default function PeerChatPage() {
         toast("Peer supporter found!", "success", `Connected with ${signal.supporterHandle}.`);
       }
 
-      // 3. Incoming Chat Message
+      // 3. Other supporters claim a seeker, or seeker leaves -> remove from queue
+      if (signal.type === "match" && localMode === "supporting") {
+        removeFromPeerQueue(signal.seekerTabId);
+      }
+
+      if (signal.type === "leave") {
+        removeFromPeerQueue(signal.senderTabId);
+
+        // If currently matched with this peer, handle disconnect
+        if (status === "matched" && signal.matchId === matchId && signal.senderTabId !== tabId) {
+          toast("Peer disconnected", "info", "Your peer left the conversation.");
+          setStatus("waiting");
+          setMatchedPeer(null);
+          setMatchId(null);
+          setMessages([]);
+        }
+      }
+
+      // 4. Incoming Chat Message
       if (status === "matched" && signal.type === "message" && signal.matchId === matchId) {
         if (signal.senderTabId !== tabId) {
           setMessages((prev) => [
@@ -137,19 +150,8 @@ export default function PeerChatPage() {
           ]);
         }
       }
-
-      // 4. Peer leaves conversation
-      if (status === "matched" && signal.type === "leave" && signal.matchId === matchId) {
-        if (signal.senderTabId !== tabId) {
-          toast("Peer disconnected", "info", "Your peer left the conversation.");
-          setStatus("waiting");
-          setMatchedPeer(null);
-          setMatchId(null);
-          setMessages([]);
-        }
-      }
     },
-    [status, localMode, tabId, myHandle, matchId, toast],
+    [status, localMode, tabId, matchId, addToPeerQueue, removeFromPeerQueue, toast],
   );
 
   // Setup BroadcastChannel
@@ -196,6 +198,46 @@ export default function PeerChatPage() {
 
     return () => clearInterval(interval);
   }, [status, localMode, myHandle, tabId]);
+
+  // Supporter manual accept request from queue
+  const handleAcceptRequest = (request: PeerQueueItem) => {
+    const isSim = request.tabId.startsWith("sim_");
+    const newMatchId = uid(isSim ? "sim_match" : "match");
+
+    if (!isSim && channelRef.current) {
+      const matchMsg: PeerP2PSignal = {
+        type: "match",
+        seekerTabId: request.tabId,
+        seekerHandle: request.handle,
+        supporterTabId: tabId,
+        supporterHandle: myHandle,
+        matchId: newMatchId,
+      };
+      channelRef.current.postMessage(matchMsg);
+    }
+
+    removeFromPeerQueue(request.tabId);
+    setMatchedPeer(request.handle);
+    setMatchId(newMatchId);
+    setIsSimulated(isSim);
+    setStatus("matched");
+
+    if (isSim) {
+      setMessages([
+        {
+          id: uid("sim_init"),
+          sender: "peer",
+          senderHandle: request.handle,
+          body: "Hi! Thanks for accepting to talk. I've been feeling a bit stressed with submissions lately.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } else {
+      setMessages([]);
+    }
+
+    toast("Connected to live peer!", "success", `You are now chatting with ${request.handle}.`);
+  };
 
   // Send message handler
   const handleSend = (e?: React.FormEvent) => {
@@ -289,7 +331,21 @@ export default function PeerChatPage() {
     toast("Demo peer connected", "success", `Connected with ${fakeHandle}.`);
   };
 
+  // Simulate adding a seeker request to queue
+  const handleSimulateIncomingRequest = () => {
+    const hex = Math.random().toString(16).slice(2, 7).toUpperCase();
+    const simItem: PeerQueueItem = {
+      handle: `MindMate #${hex}`,
+      tabId: uid("sim_tab"),
+      at: new Date().toISOString(),
+    };
+    addToPeerQueue(simItem);
+    toast("Simulated request added", "info", `${simItem.handle} is now waiting in your queue.`);
+  };
+
   if (!ready) return null;
+
+  const peerQueue = state.peerQueue ?? [];
 
   return (
     <div className="space-y-4">
@@ -329,56 +385,124 @@ export default function PeerChatPage() {
 
       {/* ------------------------------------------------ Waiting State */}
       {status === "waiting" ? (
-        <div className="card p-6 sm:p-10 text-center animate-fade-up">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-teal-50 border border-teal-200">
-            <span className="text-3xl animate-bounce" aria-hidden>
-              {localMode === "supporting" ? "🤝" : "🌱"}
-            </span>
-          </div>
-
-          <h2 className="text-xl font-semibold text-navy-900 sm:text-2xl">
-            {localMode === "supporting"
-              ? "Available to support peers"
-              : "Looking for an anonymous peer…"}
-          </h2>
-
-          <p className="muted mx-auto mt-2 max-w-md text-sm">
-            {localMode === "supporting"
-              ? "You are listening for students who want to chat. When someone connects, your 1:1 anonymous room will open instantly."
-              : "Connecting you with an active peer supporter on campus. No identity, names or student IDs are ever shared."}
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-mint-200 bg-mint-50 px-3.5 py-1.5 text-xs text-mint-900">
-              <span className="h-2 w-2 rounded-full bg-mint-500 animate-pulse-soft" />
-              Broadcasting as: {myHandle}
-            </span>
-          </div>
-
-          {/* Multi-Tab & Demo Testing Instructions */}
-          <div className="mx-auto mt-8 max-w-lg rounded-2xl border border-navy-200 bg-navy-50/70 p-4 text-left text-xs text-navy-800">
-            <p className="font-semibold text-navy-900 mb-1">
-              ✨ Live multi-tab 2-way chat:
-            </p>
-            <p className="muted mb-3">
-              Open a <strong>second tab</strong> at <code>/student/peer</code>, switch its role to{" "}
-              <strong>{localMode === "supporting" ? "Seeking" : "Supporting"}</strong>, and the two tabs will instantly connect with live 2-way messaging!
-            </p>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-navy-200/80 pt-3">
-              <span className="muted">Testing in single tab?</span>
-              <Button size="sm" tone="primary" onClick={handleSimulateMatch}>
-                Simulate match in this tab
-              </Button>
+        <div className="space-y-4 animate-fade-up">
+          <div className="card p-6 sm:p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-teal-50 border border-teal-200">
+              <span className="text-2xl animate-bounce" aria-hidden>
+                {localMode === "supporting" ? "🤝" : "🌱"}
+              </span>
             </div>
-          </div>
 
-          <div className="mt-6">
-            <Link
-              href="/student/home"
-              className="text-xs font-medium text-navy-600 hover:text-navy-900 underline underline-offset-2"
-            >
-              ← Back to Student Home
-            </Link>
+            <h2 className="text-xl font-semibold text-navy-900">
+              {localMode === "supporting"
+                ? "Available to support peers"
+                : "Looking for an anonymous peer…"}
+            </h2>
+
+            <p className="muted mx-auto mt-2 max-w-md text-sm">
+              {localMode === "supporting"
+                ? "You are listening for students who want to chat. When someone connects, they will appear in your queue below for you to accept."
+                : "Connecting you with an active peer supporter on campus. No identity, names or student IDs are ever shared."}
+            </p>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-mint-200 bg-mint-50 px-3.5 py-1.5 text-xs text-mint-900">
+                <span className="h-2 w-2 rounded-full bg-mint-500 animate-pulse-soft" />
+                Broadcasting as: {myHandle}
+              </span>
+            </div>
+
+            {/* Supporter Live Queue Section */}
+            {localMode === "supporting" ? (
+              <div className="mt-8 rounded-2xl border border-navy-200 bg-white p-5 text-left shadow-sm">
+                <div className="flex items-center justify-between border-b border-navy-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-navy-900 text-base">
+                      Students waiting to talk
+                    </h3>
+                    <Badge tone={peerQueue.length > 0 ? "teal" : "neutral"}>
+                      {peerQueue.length}
+                    </Badge>
+                  </div>
+                  <span className="muted text-xs">Click Accept to start 1:1 chat</span>
+                </div>
+
+                {peerQueue.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-2xl mb-2" aria-hidden>☕</p>
+                    <p className="text-sm font-medium text-navy-800">No requests in queue right now</p>
+                    <p className="muted text-xs mt-1">
+                      Listening for incoming student requests. Keep this tab open.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {peerQueue.map((req) => (
+                      <div
+                        key={req.tabId}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-navy-200 bg-navy-50/40 p-4 transition-all hover:border-teal-300 hover:bg-teal-50/30"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-800 text-lg" aria-hidden>
+                            🕶️
+                          </div>
+                          <div>
+                            <p className="font-semibold text-navy-900 text-sm sm:text-base">
+                              {req.handle}
+                            </p>
+                            <p className="muted text-xs">
+                              Waiting {relativeTime(req.at)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <Button
+                          tone="primary"
+                          size="sm"
+                          onClick={() => handleAcceptRequest(req)}
+                          className="font-medium"
+                        >
+                          Accept request
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {/* Multi-Tab & Demo Testing Instructions */}
+            <div className="mx-auto mt-6 max-w-lg rounded-2xl border border-navy-200 bg-navy-50/70 p-4 text-left text-xs text-navy-800">
+              <p className="font-semibold text-navy-900 mb-1">
+                ✨ Live multi-tab 2-way chat:
+              </p>
+              <p className="muted mb-3">
+                Open a <strong>second tab</strong> at <code>/student/peer</code>, switch its role to{" "}
+                <strong>{localMode === "supporting" ? "Seeking" : "Supporting"}</strong>, and test live real-time connection across tabs!
+              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-navy-200/80 pt-3">
+                <span className="muted">Testing in single tab?</span>
+                <div className="flex flex-wrap gap-2">
+                  {localMode === "supporting" ? (
+                    <Button size="sm" tone="secondary" onClick={handleSimulateIncomingRequest}>
+                      Simulate incoming request
+                    </Button>
+                  ) : null}
+                  <Button size="sm" tone="primary" onClick={handleSimulateMatch}>
+                    Simulate instant match
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <Link
+                href="/student/home"
+                className="text-xs font-medium text-navy-600 hover:text-navy-900 underline underline-offset-2"
+              >
+                ← Back to Student Home
+              </Link>
+            </div>
           </div>
         </div>
       ) : (
@@ -410,7 +534,7 @@ export default function PeerChatPage() {
                 </div>
                 <p className="text-xs text-mint-800 flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-mint-500 animate-pulse-soft" />
-                  Connected · Completely Anonymous
+                  You&rsquo;re currently connected · Completely Anonymous
                 </p>
               </div>
             </div>

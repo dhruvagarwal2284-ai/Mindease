@@ -7,10 +7,10 @@ import { Button, Callout, LinkButton, SkeletonCard, Textarea, Toggle } from "@/c
 import { cx } from "@/lib/format";
 import { EMPTY_SCOPE, SCOPE_COPY, scopeSummary, withheldSummary } from "@/lib/privacy";
 import { useStore } from "@/lib/store";
-import { CONCERN_OPTIONS, SUPPORT_MODES } from "@/lib/types";
-import type { ConcernOption, SharedDataScope, SupportMode } from "@/lib/types";
+import { SUPPORT_MODES } from "@/lib/types";
+import type { SharedDataScope, SupportMode } from "@/lib/types";
 
-const STEP_LABELS = ["Concern", "How to talk", "Anything else", "What is shared", "Confirm"];
+const STEP_LABELS = ["How to talk", "Anything else", "What is shared", "Confirm"];
 
 const MODE_BLURB: Record<SupportMode, string> = {
   Chat: "Text, in your own time. Good if speaking out loud feels like too much today.",
@@ -31,7 +31,6 @@ export default function RequestCounsellingPage() {
   const { ready, requestCounselling, toast } = useStore();
 
   const [step, setStep] = useState(0);
-  const [concern, setConcern] = useState<ConcernOption | null>(null);
   const [mode, setMode] = useState<SupportMode | null>(null);
   const [note, setNote] = useState("");
   const [scope, setScope] = useState<SharedDataScope>({ ...EMPTY_SCOPE });
@@ -45,8 +44,8 @@ export default function RequestCounsellingPage() {
   const withheldCount = withheldSummary(scope).length;
 
   const submit = () => {
-    if (!concern || !mode) return;
-    requestCounselling({ concern, mode, note, scope });
+    if (!mode) return;
+    requestCounselling({ concern: "General support", mode, note, scope });
     setConfirming(false);
     setDone(true);
     toast("Request sent", "success", "A human reads it — nothing is automated.");
@@ -110,10 +109,9 @@ export default function RequestCounsellingPage() {
   }
 
   const canContinue =
-    (step === 0 && concern !== null) ||
-    (step === 1 && mode !== null) ||
-    step === 2 ||
-    step === 3;
+    (step === 0 && mode !== null) ||
+    step === 1 ||
+    step === 2;
 
   return (
     <div className="space-y-5">
@@ -144,49 +142,10 @@ export default function RequestCounsellingPage() {
       </div>
 
       <div key={step} className="animate-fade-up">
-        {/* ------------------------------------------------ 1 concern */}
+        {/* --------------------------------------------------- 1 mode */}
         {step === 0 ? (
           <section aria-labelledby="q1">
             <h1 id="q1" className="text-2xl font-semibold tracking-tight text-navy-900">
-              What would you like help with?
-            </h1>
-            <p className="muted mt-1 text-sm">
-              Pick the closest one. You are not committing to a subject — it just helps
-              route you to the right person.
-            </p>
-            <div className="mt-4 space-y-2">
-              {CONCERN_OPTIONS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setConcern(c)}
-                  aria-pressed={concern === c}
-                  className={cx(
-                    "flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 text-left font-medium transition-colors",
-                    concern === c
-                      ? "border-teal-600 bg-teal-50 text-teal-900"
-                      : "border-navy-200 bg-white text-navy-800 hover:border-navy-300 hover:bg-navy-50",
-                  )}
-                >
-                  <span
-                    className={cx(
-                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-                      concern === c ? "border-teal-600 bg-teal-600" : "border-navy-300",
-                    )}
-                    aria-hidden
-                  >
-                    {concern === c ? <span className="text-[0.6rem] text-white">✓</span> : null}
-                  </span>
-                  {c}
-                </button>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {/* --------------------------------------------------- 2 mode */}
-        {step === 1 ? (
-          <section aria-labelledby="q2">
-            <h1 id="q2" className="text-2xl font-semibold tracking-tight text-navy-900">
               How would you prefer to talk?
             </h1>
             <p className="muted mt-1 text-sm">
@@ -213,10 +172,10 @@ export default function RequestCounsellingPage() {
           </section>
         ) : null}
 
-        {/* --------------------------------------------------- 3 note */}
-        {step === 2 ? (
-          <section aria-labelledby="q3">
-            <h1 id="q3" className="text-2xl font-semibold tracking-tight text-navy-900">
+        {/* --------------------------------------------------- 2 note */}
+        {step === 1 ? (
+          <section aria-labelledby="q2">
+            <h1 id="q2" className="text-2xl font-semibold tracking-tight text-navy-900">
               Anything you&rsquo;d like them to know first?
             </h1>
             <p className="muted mt-1 text-sm">
@@ -238,10 +197,10 @@ export default function RequestCounsellingPage() {
           </section>
         ) : null}
 
-        {/* --------------------------------------------------- 4 scope */}
-        {step === 3 ? (
-          <section aria-labelledby="q4">
-            <h1 id="q4" className="text-2xl font-semibold tracking-tight text-navy-900">
+        {/* --------------------------------------------------- 3 scope */}
+        {step === 2 ? (
+          <section aria-labelledby="q3">
+            <h1 id="q3" className="text-2xl font-semibold tracking-tight text-navy-900">
               What will be shared?
             </h1>
             <p className="muted mt-1 text-sm">
@@ -305,10 +264,10 @@ export default function RequestCounsellingPage() {
           </section>
         ) : null}
 
-        {/* ------------------------------------------------- 5 confirm */}
-        {step === 4 ? (
-          <section aria-labelledby="q5">
-            <h1 id="q5" className="text-2xl font-semibold tracking-tight text-navy-900">
+        {/* ------------------------------------------------- 4 confirm */}
+        {step === 3 ? (
+          <section aria-labelledby="q4">
+            <h1 id="q4" className="text-2xl font-semibold tracking-tight text-navy-900">
               Ready to send?
             </h1>
             <p className="muted mt-1 text-sm">
@@ -316,10 +275,6 @@ export default function RequestCounsellingPage() {
             </p>
 
             <dl className="mt-4 card divide-y divide-navy-50 p-0">
-              <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="muted text-sm">Concern</dt>
-                <dd className="text-sm font-medium text-navy-900">{concern}</dd>
-              </div>
               <div className="flex justify-between gap-4 px-4 py-3">
                 <dt className="muted text-sm">Preferred mode</dt>
                 <dd className="text-sm font-medium text-navy-900">{mode}</dd>
@@ -360,7 +315,7 @@ export default function RequestCounsellingPage() {
             Cancel
           </Link>
         )}
-        {step < 4 ? (
+        {step < 3 ? (
           <Button
             tone="primary"
             size="lg"
@@ -368,7 +323,7 @@ export default function RequestCounsellingPage() {
             disabled={!canContinue}
             onClick={() => setStep((s) => s + 1)}
           >
-            {step === 2 && !note.trim() ? "Skip" : "Continue"}
+            {step === 1 && !note.trim() ? "Skip" : "Continue"}
           </Button>
         ) : null}
       </div>
@@ -378,9 +333,7 @@ export default function RequestCounsellingPage() {
         onClose={() => setConfirming(false)}
         onConfirm={submit}
         scope={scope}
-        purpose={`So a campus counsellor can respond to your request about ${
-          concern?.toLowerCase() ?? "support"
-        }.`}
+        purpose="So a campus counsellor can respond to your support request."
       />
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useStore } from "@/lib/store";
 
 const THEMES = [
   {
@@ -44,8 +45,10 @@ const THEMES = [
 type Theme = (typeof THEMES)[number]["id"];
 
 export function ThemeSelector() {
+  const { state } = useStore();
   const [theme, setTheme] = useState<Theme>("ocean");
   const [open, setOpen] = useState(false);
+  const prevMode = useRef<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("mindease-theme") as Theme | null;
@@ -55,6 +58,23 @@ export function ThemeSelector() {
       document.documentElement.dataset.theme = saved;
     }
   }, []);
+
+  // Auto-advance theme when switching to supporting role
+  useEffect(() => {
+    if (prevMode.current !== null && prevMode.current !== state.supportMode) {
+      if (state.supportMode === "supporting") {
+        setTheme((currTheme) => {
+          const currentIndex = THEMES.findIndex((item) => item.id === currTheme);
+          const nextIndex = (currentIndex + 1) % THEMES.length;
+          const nextTheme = THEMES[nextIndex].id;
+          document.documentElement.dataset.theme = nextTheme;
+          localStorage.setItem("mindease-theme", nextTheme);
+          return nextTheme;
+        });
+      }
+    }
+    prevMode.current = state.supportMode;
+  }, [state.supportMode]);
 
   const selectTheme = (nextTheme: Theme) => {
     setTheme(nextTheme);
@@ -69,14 +89,14 @@ export function ThemeSelector() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-full border border-navy-200 bg-surface px-4 py-2 text-sm font-medium text-navy-900 shadow-md"
+        className="fixed right-4 top-4 z-40 flex items-center gap-2 rounded-full border border-navy-200 bg-surface px-4 py-2 text-sm font-medium text-navy-900 shadow-md"
       >
         <span>{currentTheme.icon}</span>
         <span>Theme</span>
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-3xl bg-surface p-6 shadow-xl">
             <div className="mb-5">
               <h2 className="text-2xl font-semibold text-navy-900">

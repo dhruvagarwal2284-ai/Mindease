@@ -486,7 +486,7 @@ export default function CaseDetailPage() {
       >
         <Field label="Resource">
           <Select value={resourcePick} onChange={(e) => setResourcePick(e.target.value)}>
-            {RESOURCES.map((r) => (
+            {[...(state.customResources ?? []), ...RESOURCES].map((r) => (
               <option key={r.id} value={r.id}>
                 {r.title} · {r.category}
               </option>
@@ -494,7 +494,7 @@ export default function CaseDetailPage() {
           </Select>
         </Field>
         <p className="muted mt-3 text-sm">
-          {resourceById(resourcePick)?.summary}
+          {resourceById(resourcePick, state.customResources)?.summary}
         </p>
       </Modal>
 

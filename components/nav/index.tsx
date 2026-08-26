@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge, Button, Drawer } from "@/components/ui";
 import { cx, relativeTime } from "@/lib/format";
 import { useStore } from "@/lib/store";
@@ -18,14 +18,40 @@ function NotificationBell({
 }) {
   const { state, markNotificationRead, markAllRead } = useStore();
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const mine = state.notifications.filter((n) => n.audience === audience);
   const unread = mine.filter((n) => !n.read).length;
 
+  // Close on outside click or Escape
+  useEffect(() => {
+    if (!open) return;
+    const handleDown = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  const isSupporter = audience === "student" && state.supportMode === "supporting";
+  const hasActivePeerChat = isSupporter && !!state.peerChat;
+  const peerQueue = isSupporter ? (state.peerQueue ?? []) : [];
+
   return (
-    <>
+    <div className="relative" ref={containerRef}>
       <button
-        onClick={() => setOpen(true)}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
         aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}
+        aria-expanded={open}
         className={cx(
           "relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
           tone === "counsellor" ? "hover:bg-pro-100" : "hover:bg-navy-100",
@@ -41,49 +67,125 @@ function NotificationBell({
         ) : null}
       </button>
 
-      <Drawer open={open} onClose={() => setOpen(false)} title="Notifications">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="muted text-xs">
-            Previews never show sensitive content — open the app to read the detail.
-          </p>
-          {unread ? (
-            <Button size="sm" tone="ghost" onClick={() => markAllRead(audience)}>
-              Mark all read
-            </Button>
+      {open ? (
+        <div
+          role="dialog"
+          aria-label="Notifications"
+          className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-2xl border border-navy-200 bg-white p-4 shadow-float z-50 animate-fade-up max-h-[80vh] overflow-y-auto"
+        >
+          <div className="flex items-center justify-between border-b border-navy-100 pb-3 mb-3">
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-navy-900 text-sm">Notifications</h2>
+              {unread ? <Badge tone="urgent">{unread} unread</Badge> : null}
+            </div>
+            {unread ? (
+              <Button size="sm" tone="ghost" onClick={() => markAllRead(audience)} className="text-xs">
+                Mark all read
+              </Button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close notifications"
+                className="text-xs text-navy-400 hover:text-navy-700 p-1"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Supporter Live Item */}
+          {hasActivePeerChat && state.peerChat ? (
+            <div className="mb-3 rounded-xl border border-mint-200 bg-mint-50/70 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-mint-900 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-mint-500 animate-pulse-soft" />
+                  Live now
+                </span>
+                <Badge tone="mint">Active 1:1</Badge>
+              </div>
+              <p className="mt-1 text-sm font-medium text-navy-900">
+                Connected with {state.peerChat.peerHandle}
+              </p>
+              <Link
+                href="/student/peer"
+                onClick={() => setOpen(false)}
+                className="mt-2 inline-flex items-center text-xs font-medium text-teal-800 hover:underline"
+              >
+                Open peer chat →
+              </Link>
+            </div>
           ) : null}
+
+          {/* Supporter Waiting Seeker Items */}
+          {isSupporter && peerQueue.length > 0 ? (
+            <div className="mb-3 rounded-xl border border-teal-200 bg-teal-50/70 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-teal-900 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse-soft" />
+                  Students waiting
+                </span>
+                <Badge tone="teal">{peerQueue.length}</Badge>
+              </div>
+              <ul className="mt-2 space-y-1.5">
+                {peerQueue.map((item) => (
+                  <li
+                    key={item.tabId}
+                    className="flex items-center justify-between rounded-lg bg-white/80 px-2.5 py-1.5 text-xs"
+                  >
+                    <span className="font-medium text-navy-900">{item.handle}</span>
+                    <span className="muted text-[11px]">{relativeTime(item.at)}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/student/peer"
+                onClick={() => setOpen(false)}
+                className="mt-2 inline-flex items-center text-xs font-medium text-teal-800 hover:underline"
+              >
+                Go to Peer support queue →
+              </Link>
+            </div>
+          ) : null}
+
+          {/* Regular Notifications */}
+          {mine.length === 0 && !hasActivePeerChat && peerQueue.length === 0 ? (
+            <p className="muted py-4 text-center text-sm">Nothing new right now.</p>
+          ) : (
+            <ul className="space-y-2">
+              {mine.map((n) => (
+                <li key={n.id}>
+                  <Link
+                    href={n.href ?? "#"}
+                    onClick={() => {
+                      markNotificationRead(n.id);
+                      setOpen(false);
+                    }}
+                    className={cx(
+                      "block rounded-xl border p-3 transition-colors",
+                      n.read
+                        ? "border-navy-100 bg-white hover:bg-navy-50"
+                        : "border-teal-200 bg-teal-50/60 hover:bg-teal-50",
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-navy-900">{n.preview}</p>
+                      {!n.read ? <Badge tone="teal">New</Badge> : null}
+                    </div>
+                    <p className="muted mt-0.5 text-xs">{n.body}</p>
+                    <p className="muted mt-1 text-[10px]">{relativeTime(n.at)}</p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p className="muted mt-3 border-t border-navy-100 pt-2 text-[11px] text-center">
+            Previews never show sensitive content.
+          </p>
         </div>
-        {mine.length === 0 ? (
-          <p className="muted text-sm">Nothing new right now.</p>
-        ) : (
-          <ul className="space-y-2">
-            {mine.map((n) => (
-              <li key={n.id}>
-                <Link
-                  href={n.href ?? "#"}
-                  onClick={() => {
-                    markNotificationRead(n.id);
-                    setOpen(false);
-                  }}
-                  className={cx(
-                    "block rounded-xl border p-3 transition-colors",
-                    n.read
-                      ? "border-navy-100 bg-white"
-                      : "border-teal-200 bg-teal-50/60 hover:bg-teal-50",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-navy-900">{n.preview}</p>
-                    {!n.read ? <Badge tone="teal">New</Badge> : null}
-                  </div>
-                  <p className="muted mt-0.5 text-sm">{n.body}</p>
-                  <p className="muted mt-1 text-xs">{relativeTime(n.at)}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Drawer>
-    </>
+      ) : null}
+    </div>
   );
 }
 
