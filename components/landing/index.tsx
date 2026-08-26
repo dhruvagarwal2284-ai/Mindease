@@ -4,7 +4,23 @@ import Link from "next/link";
 import React from "react";
 import { MindEaseLogo } from "@/components/MindEaseLogo";
 
-export const DEFAULT_HEADER_MICRO_TAGLINE = "Support, at your own pace.";
+export const AFFIRMATIVE_QUOTES = [
+  "A quiet place to land.",
+  "Help, without the noise.",
+  "One step is enough today.",
+  "Your story stays yours.",
+  "Private by design.",
+  "Speak freely. Stay unseen.",
+  "Anonymous, always your call.",
+  "Students, supporting students.",
+  "You reach out. We listen.",
+  "Someone's here when you are.",
+  "Care that respects your privacy.",
+  "Support without exposure.",
+  "Mental health, minus the risk.",
+];
+
+export const DEFAULT_HEADER_MICRO_TAGLINE = "A quiet place to land.";
 
 interface LandingHeaderProps {
   microTagline?: string;
@@ -12,13 +28,46 @@ interface LandingHeaderProps {
 }
 
 export function LandingHeader({
-  microTagline = DEFAULT_HEADER_MICRO_TAGLINE,
+  microTagline,
   showEmergencyBanner = true,
 }: LandingHeaderProps) {
   const [isBannerVisible, setIsBannerVisible] = React.useState(showEmergencyBanner);
+  const [isVisible, setIsVisible] = React.useState(true);
+  const [tagline, setTagline] = React.useState(microTagline ?? DEFAULT_HEADER_MICRO_TAGLINE);
+  const lastScrollYRef = React.useRef(0);
+
+  React.useEffect(() => {
+    if (!microTagline) {
+      const randomIndex = Math.floor(Math.random() * AFFIRMATIVE_QUOTES.length);
+      setTagline(AFFIRMATIVE_QUOTES[randomIndex]);
+    }
+  }, [microTagline]);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY <= 20) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollYRef.current && currentScrollY > 70) {
+        // Scrolling down -> hide header
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollYRef.current) {
+        // Scrolling up -> show header
+        setIsVisible(true);
+      }
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <div className="w-full sticky top-0 z-40 bg-surface/85 backdrop-blur-2xl backdrop-saturate-150 border-b border-navy-200/50 shadow-xs transition-all">
+    <div
+      className={`w-full sticky top-0 z-40 bg-surface/85 backdrop-blur-2xl backdrop-saturate-150 border-b border-navy-200/50 shadow-xs transition-transform duration-300 ease-in-out ${
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
       {/* 1. Subtle Emergency Banner with Dismiss button */}
       {isBannerVisible ? (
         <div className="w-full bg-red-500/10 border-b border-red-500/20 text-red-900 dark:text-red-300 py-1.5 px-4 text-xs backdrop-blur-md transition-all animate-fade-in">
@@ -74,7 +123,7 @@ export function LandingHeader({
         {/* Element 2: Affirmative Micro-Tagline */}
         <div className="hidden sm:flex items-center justify-center flex-1 text-center px-4">
           <p className="text-sm font-medium text-navy-800/90 italic tracking-wide">
-            &ldquo;{microTagline}&rdquo;
+            &ldquo;{tagline}&rdquo;
           </p>
         </div>
 
@@ -93,14 +142,24 @@ export function LandingHeader({
 }
 
 export function LandingFooter() {
+  const [footerQuote, setFooterQuote] = React.useState("Your story stays yours.");
+
+  React.useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * AFFIRMATIVE_QUOTES.length);
+    setFooterQuote(AFFIRMATIVE_QUOTES[randomIndex]);
+  }, []);
+
   return (
     <footer className="w-full bg-slate-900 text-slate-200 pt-14 pb-10 relative z-20 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-12">
-          {/* Column 1: Brand & Description */}
+          {/* Column 1: Brand, Affirmative Quote & Description */}
           <div className="space-y-4">
             <MindEaseLogo subtitle="Student Wellbeing" size="md" variant="light" />
-            <p className="text-sm text-slate-400 leading-relaxed">
+            <p className="text-sm text-teal-300 font-medium italic leading-relaxed">
+              &ldquo;{footerQuote}&rdquo;
+            </p>
+            <p className="text-xs text-slate-400 leading-relaxed">
               Privacy-first mental health support system for higher education institutions. Providing students with secure peer support and consent-driven professional counselling.
             </p>
             <div className="pt-1">
@@ -176,7 +235,7 @@ export function LandingFooter() {
 
         {/* Copyright & PsychOps Credit */}
         <div className="border-t border-slate-800 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <p>© {new Date().getFullYear()} MindEase Campus · Built by Team PsychOps</p>
+          <p>© {new Date().getFullYear()} MindEase · Built by Team PsychOps</p>
           <p className="text-center sm:text-right">
             Crisis &amp; helpline contacts are configured by individual higher education institutions.
           </p>
