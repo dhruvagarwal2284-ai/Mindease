@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { OfflineBanner, StudentBottomNav, StudentTopBar } from "@/components/nav";
+import { OfflineBanner, StudentBottomNav, StudentSidebar, StudentTopBar } from "@/components/nav";
 import { SkeletonCard } from "@/components/ui";
 import { useStore } from "@/lib/store";
 
@@ -33,13 +33,18 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="min-h-dvh">
-      <OfflineBanner />
-      <StudentTopBar />
-      <main id="main" className="mx-auto max-w-3xl px-4 pt-4 pb-28">
-        {children}
-      </main>
-      <StudentBottomNav />
+    <div className="min-h-dvh lg:flex">
+      <aside className="no-print sticky top-0 hidden h-dvh w-64 shrink-0 border-r border-navy-100 bg-white lg:block">
+        <StudentSidebar />
+      </aside>
+      <div className="min-w-0 flex-1">
+        <OfflineBanner />
+        <StudentTopBar />
+        <main id="main" className="mx-auto max-w-3xl px-4 pt-4 pb-28 lg:max-w-4xl lg:px-8 lg:py-7 lg:pb-12">
+          {children}
+        </main>
+        <StudentBottomNav />
+      </div>
     </div>
   );
 }

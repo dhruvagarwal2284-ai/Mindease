@@ -31,12 +31,15 @@ import type {
   JournalEntry,
   ModerationDecision,
   MoodValue,
+  PeerChatMessage,
+  PeerChatSession,
   Post,
   ReactionKey,
   Reply,
   SharedDataScope,
   SupportIndicator,
   SupportMode,
+  SupportRoleMode,
   Topic,
 } from "./types";
 
@@ -63,10 +66,15 @@ interface StoreValue {
   unlock: () => void;
 
   /* onboarding & identity */
-  completeOnboarding: (identity: AnonymousIdentity, consent: ConsentSettings) => void;
+  completeOnboarding: (
+    identity: AnonymousIdentity,
+    consent: ConsentSettings,
+    supportMode?: SupportRoleMode,
+  ) => void;
   regenerateIdentity: () => AnonymousIdentity;
   setConsent: (key: ConsentKey, value: boolean) => void;
   setA11y: (key: keyof A11ySettings, value: boolean) => void;
+  setSupportMode: (mode: SupportRoleMode) => void;
 
   /* check-ins */
   saveCheckIn: (input: { mood: MoodValue; tags: ConcernTag[]; note?: string }) => void;
@@ -127,6 +135,11 @@ interface StoreValue {
   ) => void;
   claimModeration: (id: string) => void;
 
+  /* peer chat */
+  startPeerChat: () => PeerChatSession;
+  sendPeerMessage: (body: string, sender?: "self" | "peer") => void;
+  endPeerChat: () => void;
+
   /* notifications */
   markNotificationRead: (id: string) => void;
   markAllRead: (audience: AppNotification["audience"]) => void;
@@ -146,12 +159,13 @@ interface StoreValue {
 const StoreContext = createContext<StoreValue | null>(null);
 
 function migrate(raw: unknown): AppState {
-  const base = seededState();
+  const base = emptyState();
   if (!raw || typeof raw !== "object") return base;
   const merged = { ...base, ...(raw as Partial<AppState>) };
   merged.consent = { ...base.consent, ...(merged.consent ?? {}) };
   merged.a11y = { ...base.a11y, ...(merged.a11y ?? {}) };
   merged.simulate = { ...base.simulate, ...(merged.simulate ?? {}) };
+  merged.supportMode = merged.supportMode === "supporting" ? "supporting" : "seeking";
   for (const key of [
     "checkIns",
     "journal",
@@ -173,7 +187,7 @@ function migrate(raw: unknown): AppState {
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>(() => seededState());
+  const [state, setState] = useState<AppState>(() => emptyState());
   const [ready, setReady] = useState(false);
   const [locked, setLocked] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -186,7 +200,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setState(migrate(JSON.parse(raw)));
     } catch {
-      /* corrupt or unavailable storage — fall back to the seeded state */
+      /* corrupt or unavailable storage — fall back to the empty state */
     }
     setReady(true);
   }, []);
@@ -194,7 +208,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      // peerChat is session-scoped — strip it from persistence
+      const { peerChat: _, ...persistable } = state;
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable));
     } catch {
       /* quota or private mode — the session still works, it just will not persist */
     }
@@ -343,19 +359,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   /* ------------------------------------------------------------- actions */
 
   const completeOnboarding = useCallback(
-    (identity: AnonymousIdentity, consent: ConsentSettings) => {
+    (
+      identity: AnonymousIdentity,
+      consent: ConsentSettings,
+      supportMode: SupportRoleMode = "seeking",
+    ) => {
       setState((p) => ({
         ...p,
         onboarded: true,
         identity,
         consent,
+        supportMode,
         audit: [
           audit(
             "student",
             "Onboarding completed",
-            `Pseudonymous identity generated on device. Consent recorded: ${Object.entries(
-              consent,
-            )
+            `Pseudonymous identity generated on device. Role: ${
+              supportMode === "supporting" ? "Peer supporter" : "Seeking support"
+            }. Consent recorded: ${Object.entries(consent)
               .filter(([, v]) => v)
               .map(([k]) => k)
               .join(", ")}.`,
@@ -366,6 +387,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     [audit],
   );
+
+  const setSupportMode = useCallback((mode: SupportRoleMode) => {
+    setState((p) => ({ ...p, supportMode: mode }));
+  }, []);
 
   const regenerateIdentity = useCallback(() => {
     const identity = generateIdentity();
@@ -1056,6 +1081,43 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  /* ----------------------------------------------------------- peer chat */
+
+  const startPeerChat = useCallback(() => {
+    const hex = Math.random().toString(16).slice(2, 7).toUpperCase();
+    const session: PeerChatSession = {
+      id: uid("pc"),
+      peerHandle: `MindMate #${hex}`,
+      startedAt: new Date().toISOString(),
+      messages: [],
+    };
+    setState((p) => ({ ...p, peerChat: session }));
+    return session;
+  }, []);
+
+  const sendPeerMessage = useCallback(
+    (body: string, sender: "self" | "peer" = "self") => {
+      const msg: PeerChatMessage = {
+        id: uid("pm"),
+        sender,
+        body,
+        createdAt: new Date().toISOString(),
+      };
+      setState((p) => {
+        if (!p.peerChat) return p;
+        return {
+          ...p,
+          peerChat: { ...p.peerChat, messages: [...p.peerChat.messages, msg] },
+        };
+      });
+    },
+    [],
+  );
+
+  const endPeerChat = useCallback(() => {
+    setState((p) => ({ ...p, peerChat: null }));
+  }, []);
+
   /* -------------------------------------------------------- demo plumbing */
 
   const setSimulate = useCallback((key: "aiDown" | "offline", value: boolean) => {
@@ -1111,6 +1173,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     regenerateIdentity,
     setConsent,
     setA11y,
+    setSupportMode,
     saveCheckIn,
     todaysCheckIn,
     dismissSupportPrompt,
@@ -1138,6 +1201,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setCaseStatus,
     resolveModeration,
     claimModeration,
+    startPeerChat,
+    sendPeerMessage,
+    endPeerChat,
     markNotificationRead,
     markAllRead,
     setSimulate,
