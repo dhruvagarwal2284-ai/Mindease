@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import {usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MindEaseLogo } from "@/components/MindEaseLogo";
@@ -10,6 +10,7 @@ import { cx, relativeTime } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
 /* ----------------------------------------------------------------- shared */
+
 
 function NotificationBell({
   audience,
@@ -432,41 +433,68 @@ export function StudentBottomNav() {
   );
 }
 
-// export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
+// /* ------------------------------------------------------------ counsellor  */
+
+// const COUNSELLOR_NAV = [
+//   { href: "/counsellor/dashboard", label: "Dashboard", icon: "▦" },
+//   { href: "/counsellor/alerts", label: "Support alerts", icon: "◈" },
+//   { href: "/counsellor/cases", label: "Cases", icon: "▤" },
+//   { href: "/counsellor/appointments", label: "Appointments", icon: "▣" },
+//   { href: "/counsellor/moderation", label: "Community safety", icon: "⚑" },
+//   { href: "/counsellor/resources", label: "Resources", icon: "◇" },
+//   { href: "/counsellor/analytics", label: "Analytics", icon: "◧" },
+//   { href: "/counsellor/settings", label: "Settings", icon: "⚙" },
+// ];
+
+// export function CounsellorSidebar({ onNavigate }: { onNavigate?: () => void }) {
 //   const pathname = usePathname();
-//   const { state, setSupportMode, toast } = useStore();
+//   const { state } = useStore();
+//   const newAlerts = state.alerts.filter((a) => a.status === "new").length;
+//   const pendingMod = state.moderation.filter((m) => m.status !== "resolved").length;
+//   const pendingCases = state.cases.filter((c) => c.status === "requested").length;
+
+//   const badgeFor = (href: string) =>
+//     href.endsWith("/alerts")
+//       ? newAlerts
+//       : href.endsWith("/moderation")
+//         ? pendingMod
+//         : href.endsWith("/cases")
+//           ? pendingCases
+//           : 0;
 
 //   return (
 //     <div className="flex h-full flex-col">
 //       <div className="px-5 py-5">
-//         <MindEaseLogo href="/student/home" size="md" subtitle="Student Portal" />
+//         <MindEaseLogo href="/counsellor/dashboard" size="md" subtitle="Counsellor Platform" />
 //       </div>
 
-//       <nav aria-label="Student sections" className="flex-1 px-3">
-//         <ul className="space-y-1">
-//           {getStudentTabs(state.supportMode).map ((t)=> {
-//             const active = pathname.startsWith(t.href);
+//       <nav aria-label="Counsellor sections" className="flex-1 px-3">
+//         <ul className="space-y-0.5">
+//           {COUNSELLOR_NAV.map((n) => {
+//             const active = pathname.startsWith(n.href);
+//             const badge = badgeFor(n.href);
 //             return (
-//               <li key={t.href}>
+//               <li key={n.href}>
 //                 <Link
-//                   href={t.href}
+//                   href={n.href}
 //                   onClick={onNavigate}
 //                   aria-current={active ? "page" : undefined}
 //                   className={cx(
 //                     "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
 //                     active
-//                       ? t.urgent
-//                         ? "bg-urgent-100 text-urgent-900 font-semibold"
-//                         : "bg-teal-100 text-teal-900 font-semibold"
-//                       : t.urgent
-//                         ? "text-urgent-700 hover:bg-urgent-50"
-//                         : "text-navy-600 hover:bg-navy-100 hover:text-navy-900",
+//                       ? "bg-pro-100 text-pro-900"
+//                       : "text-navy-600 hover:bg-navy-100 hover:text-navy-900",
 //                   )}
 //                 >
-//                   <span aria-hidden className="w-5 text-center text-base">
-//                     {t.icon}
+//                   <span aria-hidden className="w-4 text-center">
+//                     {n.icon}
 //                   </span>
-//                   <span className="flex-1">{t.label}</span>
+//                   <span className="flex-1">{n.label}</span>
+//                   {badge ? (
+//                     <span className="rounded-full bg-urgent-600 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white">
+//                       {badge}
+//                     </span>
+//                   ) : null}
 //                 </Link>
 //               </li>
 //             );
@@ -474,74 +502,45 @@ export function StudentBottomNav() {
 //         </ul>
 //       </nav>
 
-//       <div className="border-t border-navy-100 px-4 py-4 space-y-3">
-//         <div className="flex items-center justify-between">
-//           <div className="min-w-0 flex-1">
-//             <p className="truncate text-xs font-mono font-semibold text-navy-900">
-//               {state.identity?.handle ?? "MindMate"}
-//             </p>
-//             <p className="text-[11px] text-navy-500 flex items-center gap-1.5 mt-0.5">
-//               <span
-//                 className={cx(
-//                   "h-1.5 w-1.5 rounded-full",
-//                   state.supportMode === "supporting" ? "bg-mint-500" : "bg-teal-500",
-//                 )}
-//                 aria-hidden
-//               />
-//               Currently:{" "}
-//               <strong className="font-medium text-navy-700">
-//                 {state.supportMode === "supporting" ? "Peer supporter" : "Seeking support"}
-//               </strong>
-//             </p>
-//           </div>
-//           <div className="flex items-center gap-0.5 shrink-0">
-//             <NotificationBell audience="student" />
-//             <Link
-//               href="/student/settings"
-//               onClick={onNavigate}
-//               aria-label="Settings"
-//               className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-navy-100 transition-colors"
-//             >
-//               <span aria-hidden className="text-base">⚙️</span>
-//             </Link>
-//           </div>
-//         </div>
-
-//         <button
-//           type="button"
-//           onClick={() => {
-//             const next = state.supportMode === "supporting" ? "seeking" : "supporting";
-//             setSupportMode(next);
-//             toast(
-//               next === "supporting" ? "Switched to Peer Supporter" : "Switched to Seeking Support",
-//               "info",
-//               next === "supporting"
-//                 ? "You are now available to chat with peers who need support."
-//                 : "You are now in student mode looking for resources or support.",
-//             );
-//           }}
-//           className="w-full text-left flex items-center justify-between rounded-xl border border-navy-200 bg-navy-50/70 hover:bg-navy-100 px-2.5 py-1.5 text-xs text-navy-700 transition-colors cursor-pointer"
+//       <div className="border-t border-navy-100 px-5 py-4">
+//         <p className="text-xs font-medium text-navy-800">Dr. A. Rao</p>
+//         <p className="muted text-xs">Campus counselling · Staff view</p>
+//         <Link
+//           href="/"
+//           className="mt-2 inline-block text-xs font-medium text-teal-800 hover:underline"
 //         >
-//           <span>Switch to {state.supportMode === "supporting" ? "Seeking mode" : "Supporting mode"}</span>
-//           <span className="font-semibold text-teal-800" aria-hidden>⇄</span>
-//         </button>
-
-//         <div className="pt-0.5">
-//           <Link
-//             href="/"
-//             onClick={onNavigate}
-//             className="inline-block text-xs font-medium text-teal-800 hover:underline"
-//           >
-//             Switch role / sign out
-//           </Link>
-//         </div>
+//           Switch role / sign out
+//         </Link>
 //       </div>
 //     </div>
 //   );
 // }
 
+// export function CounsellorTopBar({ title }: { title: string }) {
+//   const [open, setOpen] = useState(false);
+//   return (
+//     <header className="no-print sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-navy-100 bg-white/90 px-4 backdrop-blur lg:px-6">
+//       <button
+//         onClick={() => setOpen(true)}
+//         aria-label="Open navigation"
+//         className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-navy-100 lg:hidden"
+//       >
+//         <span aria-hidden>☰</span>
+//       </button>
+//       <h1 className="truncate text-base font-semibold text-navy-900">{title}</h1>
+//       <div className="ml-auto flex items-center gap-1">
+//         <NotificationBell audience="counsellor" tone="counsellor" />
+//       </div>
+
+//       <Drawer open={open} onClose={() => setOpen(false)} title="Navigation">
+//         <CounsellorSidebar onNavigate={() => setOpen(false)} />
+//       </Drawer>
+//     </header>
+//   );
+// }
 export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const router = useRouter(); // 🔥 NAYI LINE: Router add kiya
   const { state, setSupportMode, toast } = useStore();
 
   return (
@@ -582,10 +581,10 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
         </ul>
       </nav>
 
-      {/* 🔥 YAHAN CHANGE HUA HAI: BOTTOM FOOTER AREA */}
+      {/* 🔥 BOTTOM FOOTER AREA */}
       <div className="border-t border-navy-100 px-4 py-4 space-y-4">
         
-        {/* 1. SWITCH BUTTON (Ab Upar Aa Gaya) */}
+        {/* 1. SWITCH BUTTON */}
         <button
           type="button"
           onClick={() => {
@@ -598,6 +597,10 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 ? "You are now available to chat with peers who need support."
                 : "You are now in student mode looking for resources or support.",
             );
+            
+            // 🔥 YAHAN JADOO HOGA: Mode change hote hi home page pe dhakka maar dega
+            router.push('/student/home');
+            if (onNavigate) onNavigate(); // Mobile menu band karne ke liye
           }}
           className="w-full text-left flex items-center justify-between rounded-xl border border-navy-200 bg-navy-50/70 hover:bg-navy-100 px-3 py-2 text-xs font-medium text-navy-800 transition-colors cursor-pointer"
         >
@@ -605,7 +608,7 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <span className="font-bold text-teal-800 text-sm" aria-hidden>⇄</span>
         </button>
 
-        {/* 2. PROFILE WALA BLOCK (Ab Niche Aa Gaya) */}
+        {/* 2. PROFILE WALA BLOCK */}
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-mono font-semibold text-navy-900">
@@ -649,111 +652,5 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
     </div>
-  );
-}
-
-/* ------------------------------------------------------------ counsellor  */
-
-const COUNSELLOR_NAV = [
-  { href: "/counsellor/dashboard", label: "Dashboard", icon: "▦" },
-  { href: "/counsellor/alerts", label: "Support alerts", icon: "◈" },
-  { href: "/counsellor/cases", label: "Cases", icon: "▤" },
-  { href: "/counsellor/appointments", label: "Appointments", icon: "▣" },
-  { href: "/counsellor/moderation", label: "Community safety", icon: "⚑" },
-  { href: "/counsellor/resources", label: "Resources", icon: "◇" },
-  { href: "/counsellor/analytics", label: "Analytics", icon: "◧" },
-  { href: "/counsellor/settings", label: "Settings", icon: "⚙" },
-];
-
-export function CounsellorSidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
-  const { state } = useStore();
-  const newAlerts = state.alerts.filter((a) => a.status === "new").length;
-  const pendingMod = state.moderation.filter((m) => m.status !== "resolved").length;
-  const pendingCases = state.cases.filter((c) => c.status === "requested").length;
-
-  const badgeFor = (href: string) =>
-    href.endsWith("/alerts")
-      ? newAlerts
-      : href.endsWith("/moderation")
-        ? pendingMod
-        : href.endsWith("/cases")
-          ? pendingCases
-          : 0;
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="px-5 py-5">
-        <MindEaseLogo href="/counsellor/dashboard" size="md" subtitle="Counsellor Platform" />
-      </div>
-
-      <nav aria-label="Counsellor sections" className="flex-1 px-3">
-        <ul className="space-y-0.5">
-          {COUNSELLOR_NAV.map((n) => {
-            const active = pathname.startsWith(n.href);
-            const badge = badgeFor(n.href);
-            return (
-              <li key={n.href}>
-                <Link
-                  href={n.href}
-                  onClick={onNavigate}
-                  aria-current={active ? "page" : undefined}
-                  className={cx(
-                    "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors",
-                    active
-                      ? "bg-pro-100 text-pro-900"
-                      : "text-navy-600 hover:bg-navy-100 hover:text-navy-900",
-                  )}
-                >
-                  <span aria-hidden className="w-4 text-center">
-                    {n.icon}
-                  </span>
-                  <span className="flex-1">{n.label}</span>
-                  {badge ? (
-                    <span className="rounded-full bg-urgent-600 px-1.5 py-0.5 text-[0.65rem] font-semibold text-white">
-                      {badge}
-                    </span>
-                  ) : null}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      <div className="border-t border-navy-100 px-5 py-4">
-        <p className="text-xs font-medium text-navy-800">Dr. A. Rao</p>
-        <p className="muted text-xs">Campus counselling · Staff view</p>
-        <Link
-          href="/"
-          className="mt-2 inline-block text-xs font-medium text-teal-800 hover:underline"
-        >
-          Switch role / sign out
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-export function CounsellorTopBar({ title }: { title: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <header className="no-print sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-navy-100 bg-white/90 px-4 backdrop-blur lg:px-6">
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Open navigation"
-        className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-navy-100 lg:hidden"
-      >
-        <span aria-hidden>☰</span>
-      </button>
-      <h1 className="truncate text-base font-semibold text-navy-900">{title}</h1>
-      <div className="ml-auto flex items-center gap-1">
-        <NotificationBell audience="counsellor" tone="counsellor" />
-      </div>
-
-      <Drawer open={open} onClose={() => setOpen(false)} title="Navigation">
-        <CounsellorSidebar onNavigate={() => setOpen(false)} />
-      </Drawer>
-    </header>
   );
 }
