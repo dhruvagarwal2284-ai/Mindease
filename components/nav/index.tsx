@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { MindEaseLogo } from "@/components/MindEaseLogo";
 import { Badge, Button, Drawer } from "@/components/ui";
 import { cx, relativeTime } from "@/lib/format";
 import { useStore } from "@/lib/store";
@@ -18,15 +20,26 @@ function NotificationBell({
 }) {
   const { state, markNotificationRead, markAllRead } = useStore();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const mine = state.notifications.filter((n) => n.audience === audience);
   const unread = mine.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close on outside click or Escape
   useEffect(() => {
     if (!open) return;
     const handleDown = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node) &&
+        panelRef.current &&
+        !panelRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -67,124 +80,159 @@ function NotificationBell({
         ) : null}
       </button>
 
-      {open ? (
-        <div
-          role="dialog"
-          aria-label="Notifications"
-          className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-2xl border border-navy-200 bg-white p-4 shadow-float z-50 animate-fade-up max-h-[80vh] overflow-y-auto"
-        >
-          <div className="flex items-center justify-between border-b border-navy-100 pb-3 mb-3">
-            <div className="flex items-center gap-2">
-              <h2 className="font-semibold text-navy-900 text-sm">Notifications</h2>
-              {unread ? <Badge tone="urgent">{unread} unread</Badge> : null}
-            </div>
-            {unread ? (
-              <Button size="sm" tone="ghost" onClick={() => markAllRead(audience)} className="text-xs">
-                Mark all read
-              </Button>
-            ) : (
-              <button
-                type="button"
+      {open && mounted
+        ? createPortal(
+            <>
+              {/* Full Screen Backdrop with Blur */}
+              <div
+                className="fixed inset-0 z-[150] bg-navy-950/45 backdrop-blur-md transition-opacity animate-fade-in"
                 onClick={() => setOpen(false)}
-                aria-label="Close notifications"
-                className="text-xs text-navy-400 hover:text-navy-700 p-1"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+                aria-hidden="true"
+              />
 
-          {/* Supporter Live Item */}
-          {hasActivePeerChat && state.peerChat ? (
-            <div className="mb-3 rounded-xl border border-mint-200 bg-mint-50/70 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-mint-900 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-mint-500 animate-pulse-soft" />
-                  Live now
-                </span>
-                <Badge tone="mint">Active 1:1</Badge>
-              </div>
-              <p className="mt-1 text-sm font-medium text-navy-900">
-                Connected with {state.peerChat.peerHandle}
-              </p>
-              <Link
-                href="/student/peer"
-                onClick={() => setOpen(false)}
-                className="mt-2 inline-flex items-center text-xs font-medium text-teal-800 hover:underline"
+              {/* Floating High-Z Notification Panel */}
+              <div
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Notifications"
+                className="fixed right-3 sm:right-6 top-16 z-[160] w-[calc(100vw-1.5rem)] sm:w-96 max-w-md bg-white rounded-2xl shadow-2xl border border-navy-200 overflow-hidden max-h-[85vh] flex flex-col animate-fade-up"
               >
-                Open peer chat →
-              </Link>
-            </div>
-          ) : null}
-
-          {/* Supporter Waiting Seeker Items */}
-          {isSupporter && peerQueue.length > 0 ? (
-            <div className="mb-3 rounded-xl border border-teal-200 bg-teal-50/70 p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-teal-900 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse-soft" />
-                  Students waiting
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-navy-100 px-4 py-3 bg-navy-50/60 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-base" aria-hidden>
+                  🔔
                 </span>
-                <Badge tone="teal">{peerQueue.length}</Badge>
+                <h2 className="font-semibold text-navy-900 text-sm">Notifications</h2>
+                {unread ? <Badge tone="urgent">{unread} unread</Badge> : null}
               </div>
-              <ul className="mt-2 space-y-1.5">
-                {peerQueue.map((item) => (
-                  <li
-                    key={item.tabId}
-                    className="flex items-center justify-between rounded-lg bg-white/80 px-2.5 py-1.5 text-xs"
+              <div className="flex items-center gap-2">
+                {unread ? (
+                  <Button
+                    size="sm"
+                    tone="ghost"
+                    onClick={() => markAllRead(audience)}
+                    className="text-xs font-medium text-teal-800 hover:text-teal-900"
                   >
-                    <span className="font-medium text-navy-900">{item.handle}</span>
-                    <span className="muted text-[11px]">{relativeTime(item.at)}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/student/peer"
-                onClick={() => setOpen(false)}
-                className="mt-2 inline-flex items-center text-xs font-medium text-teal-800 hover:underline"
-              >
-                Go to Peer support queue →
-              </Link>
+                    Mark all read
+                  </Button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close notifications"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-navy-400 hover:bg-navy-200/60 hover:text-navy-700 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-          ) : null}
 
-          {/* Regular Notifications */}
-          {mine.length === 0 && !hasActivePeerChat && peerQueue.length === 0 ? (
-            <p className="muted py-4 text-center text-sm">Nothing new right now.</p>
-          ) : (
-            <ul className="space-y-2">
-              {mine.map((n) => (
-                <li key={n.id}>
+            {/* Scrollable content */}
+            <div className="overflow-y-auto p-4 space-y-3 flex-1">
+              {/* Supporter Live Item */}
+              {hasActivePeerChat && state.peerChat ? (
+                <div className="rounded-xl border border-mint-200 bg-mint-50/80 p-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-mint-900 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-mint-500 animate-pulse-soft" />
+                      Live now
+                    </span>
+                    <Badge tone="mint">Active 1:1</Badge>
+                  </div>
+                  <p className="mt-1 text-sm font-medium text-navy-900">
+                    Connected with {state.peerChat.peerHandle}
+                  </p>
                   <Link
-                    href={n.href ?? "#"}
-                    onClick={() => {
-                      markNotificationRead(n.id);
-                      setOpen(false);
-                    }}
-                    className={cx(
-                      "block rounded-xl border p-3 transition-colors",
-                      n.read
-                        ? "border-navy-100 bg-white hover:bg-navy-50"
-                        : "border-teal-200 bg-teal-50/60 hover:bg-teal-50",
-                    )}
+                    href="/student/peer"
+                    onClick={() => setOpen(false)}
+                    className="mt-2 inline-flex items-center text-xs font-semibold text-teal-800 hover:underline"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium text-navy-900">{n.preview}</p>
-                      {!n.read ? <Badge tone="teal">New</Badge> : null}
-                    </div>
-                    <p className="muted mt-0.5 text-xs">{n.body}</p>
-                    <p className="muted mt-1 text-[10px]">{relativeTime(n.at)}</p>
+                    Open peer chat →
                   </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+                </div>
+              ) : null}
 
-          <p className="muted mt-3 border-t border-navy-100 pt-2 text-[11px] text-center">
-            Previews never show sensitive content.
-          </p>
-        </div>
-      ) : null}
+              {/* Supporter Waiting Seeker Items */}
+              {isSupporter && peerQueue.length > 0 ? (
+                <div className="rounded-xl border border-teal-200 bg-teal-50/80 p-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-teal-900 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse-soft" />
+                      Students waiting
+                    </span>
+                    <Badge tone="teal">{peerQueue.length}</Badge>
+                  </div>
+                  <ul className="mt-2 space-y-1.5">
+                    {peerQueue.map((item) => (
+                      <li
+                        key={item.tabId}
+                        className="flex items-center justify-between rounded-lg bg-white/90 px-2.5 py-1.5 text-xs shadow-2xs"
+                      >
+                        <span className="font-medium text-navy-900">{item.handle}</span>
+                        <span className="muted text-[11px]">{relativeTime(item.at)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/student/peer"
+                    onClick={() => setOpen(false)}
+                    className="mt-2 inline-flex items-center text-xs font-semibold text-teal-800 hover:underline"
+                  >
+                    Go to Peer support queue →
+                  </Link>
+                </div>
+              ) : null}
+
+              {/* Regular Notifications */}
+              {mine.length === 0 && !hasActivePeerChat && peerQueue.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-2xl mb-1" aria-hidden>
+                    ✨
+                  </p>
+                  <p className="text-sm font-medium text-navy-800">You&rsquo;re all caught up</p>
+                  <p className="muted text-xs mt-0.5">Nothing new right now.</p>
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {mine.map((n) => (
+                    <li key={n.id}>
+                      <Link
+                        href={n.href ?? "#"}
+                        onClick={() => {
+                          markNotificationRead(n.id);
+                          setOpen(false);
+                        }}
+                        className={cx(
+                          "block rounded-xl border p-3 transition-all hover:shadow-xs",
+                          n.read
+                            ? "border-navy-100 bg-white hover:bg-navy-50"
+                            : "border-teal-300 bg-teal-50/70 hover:bg-teal-50",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-semibold text-navy-900">{n.preview}</p>
+                          {!n.read ? <Badge tone="teal">New</Badge> : null}
+                        </div>
+                        <p className="muted mt-1 text-xs leading-relaxed">{n.body}</p>
+                        <p className="text-[10px] text-navy-400 mt-1.5">{relativeTime(n.at)}</p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-navy-100 bg-navy-50/40 px-4 py-2 text-center text-[11px] text-navy-500 shrink-0">
+              🔒 Previews never show sensitive personal content.
+            </div>
+          </div>
+        </>,
+        document.body,
+      )
+    : null}
     </div>
   );
 }
@@ -321,15 +369,7 @@ export function StudentTopBar() {
   return (
     <header className="no-print sticky top-0 z-30 border-b border-navy-100 bg-white/90 backdrop-blur lg:hidden">
       <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
-        <Link href="/student/home" className="flex items-center gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-900 text-sm font-bold text-white"
-            aria-hidden
-          >
-            M
-          </span>
-          <span className="font-semibold tracking-tight text-navy-900">MindEase</span>
-        </Link>
+        <MindEaseLogo href="/student/home" size="sm" />
         <span className="muted hidden truncate text-xs sm:inline">
           {state.identity?.handle}
         </span>
@@ -338,11 +378,9 @@ export function StudentTopBar() {
           <Link
             href="/student/settings"
             aria-label="Settings"
-            className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-navy-100"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-navy-600 hover:bg-navy-100"
           >
-            <span aria-hidden className="text-lg">
-              ⚙️
-            </span>
+            ⚙
           </Link>
         </div>
       </div>
@@ -355,8 +393,8 @@ export function StudentBottomNav() {
   const { state } = useStore();
   return (
     <nav
-      aria-label="Primary"
-      className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      aria-label="Student primary"
+      className="no-print fixed right-0 bottom-0 left-0 z-30 border-t border-navy-100 bg-white/95 px-2 backdrop-blur lg:hidden"
     >
       <ul className="space-y-1">
         {getStudentTabs(state.supportMode).map((t) => {
@@ -400,22 +438,9 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      <Link
-        href="/student/home"
-        onClick={onNavigate}
-        className="flex items-center gap-2.5 px-5 py-5"
-      >
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-navy-900 text-sm font-bold text-white"
-          aria-hidden
-        >
-          M
-        </span>
-        <span>
-          <span className="block leading-tight font-semibold text-navy-900">MindEase</span>
-          <span className="block text-xs text-teal-800">Student portal</span>
-        </span>
-      </Link>
+      <div className="px-5 py-5">
+        <MindEaseLogo href="/student/home" size="md" subtitle="Student Portal" />
+      </div>
 
       <nav aria-label="Student sections" className="flex-1 px-3">
         <ul className="space-y-1">
@@ -546,22 +571,9 @@ export function CounsellorSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      <Link
-        href="/counsellor/dashboard"
-        onClick={onNavigate}
-        className="flex items-center gap-2.5 px-5 py-5"
-      >
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-pro-700 text-sm font-bold text-white"
-          aria-hidden
-        >
-          M
-        </span>
-        <span>
-          <span className="block leading-tight font-semibold text-navy-900">MindEase</span>
-          <span className="block text-xs text-pro-700">Counsellor platform</span>
-        </span>
-      </Link>
+      <div className="px-5 py-5">
+        <MindEaseLogo href="/counsellor/dashboard" size="md" subtitle="Counsellor Platform" />
+      </div>
 
       <nav aria-label="Counsellor sections" className="flex-1 px-3">
         <ul className="space-y-0.5">

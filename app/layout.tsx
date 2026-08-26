@@ -1,9 +1,16 @@
 import type { Metadata, Viewport } from "next";
+import { Cinzel } from "next/font/google";
 import Script from "next/script";
 import { LockScreen } from "@/components/privacy";
 import { Toaster } from "@/components/ui";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  variable: "--font-cinzel",
+  weight: ["500", "600", "700", "800"],
+});
 
 export const metadata: Metadata = {
   title: "MindEase Campus",
@@ -25,6 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      className={cinzel.variable}
       data-theme="ocean"
       data-contrast="normal"
       data-motion="full"
