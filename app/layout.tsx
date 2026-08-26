@@ -4,7 +4,23 @@ import Script from "next/script";
 import { LockScreen } from "@/components/privacy";
 import { Toaster } from "@/components/ui";
 import { StoreProvider } from "@/lib/store";
+import fs from "node:fs";
+import path from "node:path";
 import "./globals.css";
+
+// Sync latest uploaded logo asset to public directories
+try {
+  const src =
+    "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787773964767.png";
+  const destDir = path.join(process.cwd(), "public", "images");
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(destDir, "mindease-logo.png"));
+    fs.copyFileSync(src, path.join(process.cwd(), "public", "logo.png"));
+  }
+} catch {
+  // fallback if already present
+}
 
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -13,7 +29,7 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "MindEase Campus",
+  title: "MindEase",
   description:
     "Anonymous peer support, a private journal and consent-based counselling for campus mental health.",
 };

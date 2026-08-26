@@ -61,7 +61,7 @@ export default function RegisterAsPeerPage() {
               href="/"
               className="text-xs font-semibold text-teal-800 hover:text-teal-900 hover:underline inline-flex items-center gap-1"
             >
-              ← Back to MindEase Campus Home
+              ← Back to MindEase Home
             </Link>
           </div>
 

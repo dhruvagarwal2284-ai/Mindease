@@ -51,7 +51,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col text-navy-950 font-sans selection:bg-teal-100 selection:text-teal-900">
       {/* 1. Header (Sticky, with emergency banner, logo, affirmative tagline, Register button) */}
-      <LandingHeader microTagline="Support, at your own pace." />
+      <LandingHeader />
 
       {/* 2. Truly Fixed Viewport Background (Stays 100% pinned behind all pre-footer content) */}
       <div
@@ -79,7 +79,7 @@ export default function LandingPage() {
             <div className="max-w-xl lg:max-w-2xl space-y-4 sm:space-y-5 animate-fade-up">
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full border border-teal-200 bg-white/80 backdrop-blur shadow-2xs text-xs font-bold text-teal-950">
                 <span className="h-2 w-2 rounded-full bg-teal-600 animate-pulse-soft" />
-                Zero-Knowledge · Anonymous Student Support
+                Anonymous Student Support
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-navy-950 leading-[1.12]">
