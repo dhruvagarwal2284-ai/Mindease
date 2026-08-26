@@ -3,26 +3,32 @@
 import { ThemeSelector } from "@/components/ThemeSelector";
 import Link from "next/link";
 import { useMemo } from "react";
-import { MoodTimeline } from "@/components/charts";
 import { DailyCheckIn } from "@/components/checkin";
 import { AnonymousModeBar } from "@/components/privacy";
-import { AiUnavailable, StudentSupportPrompt } from "@/components/support";
-import { Badge, LinkButton, SkeletonCard } from "@/components/ui";
-import { cx, isoDay, pluralize } from "@/lib/format";
-import { CONSENT_COPY } from "@/lib/privacy";
+import {
+  AiUnavailable,
+  StudentSupportPrompt,
+} from "@/components/support";
+import {
+  Badge,
+  LinkButton,
+  SkeletonCard,
+} from "@/components/ui";
+import { cx, isoDay } from "@/lib/format";
 import { recommendResources } from "@/lib/resources";
 import { useStore } from "@/lib/store";
 import { shouldPromptStudent } from "@/lib/support-indicator";
-import type { ConsentKey } from "@/lib/types";
 
 /* --------------------------------------------------------------- greeting */
 
 function greetingFor(date: Date): string {
   const h = date.getHours();
+
   if (h < 5) return "You're up late";
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   if (h < 22) return "Good evening";
+
   return "Winding down";
 }
 
@@ -69,28 +75,30 @@ const QUICK_ACTIONS: {
   },
 ];
 
-const CONSENT_ORDER: ConsentKey[] = [
-  "anonymousCommunity",
-  "moodTracking",
-  "aiSupportAnalysis",
-  "counsellorSharing",
-  "journalSharing",
-  "notifications",
-];
-
 /* ------------------------------------------------------------------- page */
 
 export default function StudentHomePage() {
-  const { ready, state, indicator, dismissSupportPrompt } = useStore();
+  const {
+    ready,
+    state,
+    indicator,
+    dismissSupportPrompt,
+  } = useStore();
 
   const recentTags = useMemo(() => {
     const recent = [...state.checkIns]
       .sort((a, b) => (a.date < b.date ? 1 : -1))
       .slice(0, 5);
-    return Array.from(new Set(recent.flatMap((c) => c.tags as string[])));
+
+    return Array.from(
+      new Set(recent.flatMap((c) => c.tags as string[])),
+    );
   }, [state.checkIns]);
 
-  const recommended = useMemo(() => recommendResources(recentTags, 3), [recentTags]);
+  const recommended = useMemo(
+    () => recommendResources(recentTags, 3),
+    [recentTags],
+  );
 
   if (!ready) {
     return (
@@ -103,37 +111,53 @@ export default function StudentHomePage() {
   }
 
   const analysisOn = state.consent.aiSupportAnalysis;
-  const promptDismissedToday = state.dismissedPromptOn === isoDay();
+
+  const promptDismissedToday =
+    state.dismissedPromptOn === isoDay();
+
   const showPrompt =
     analysisOn &&
     !state.simulate.aiDown &&
     shouldPromptStudent(indicator) &&
     !promptDismissedToday;
-  const showAiDown = analysisOn && state.simulate.aiDown;
 
-  const checkInCount = state.checkIns.length;
+  const showAiDown =
+    analysisOn && state.simulate.aiDown;
 
   return (
-    <div className="space-y-5 pb-2">
-    <ThemeSelector />
+    <div className="space-y-5 pb-0">
+
+      {/* ------------------------------------------------------ theme */}
+
+      <ThemeSelector />
+
       {/* ------------------------------------------------------- greeting */}
+
       <header className="animate-fade-up">
-        <p className="muted text-sm">{greetingFor(new Date())},</p>
+        <p className="muted text-sm">
+          {greetingFor(new Date())},
+        </p>
+
         <h1 className="text-2xl font-semibold tracking-tight text-navy-900">
           {state.identity?.handle ?? "MindMate"}
         </h1>
+
         <p className="muted mt-1 text-sm">
           What support could you use right now? Nothing here is compulsory.
         </p>
+
         <AnonymousModeBar className="mt-3" />
       </header>
 
       {/* ------------------------------------------------------- check-in */}
+
       <DailyCheckIn />
 
       {/* -------------------------------------------------- support offer */}
+
       <div aria-live="polite">
         {showAiDown ? <AiUnavailable /> : null}
+
         {showPrompt ? (
           <StudentSupportPrompt
             indicator={indicator}
@@ -144,6 +168,7 @@ export default function StudentHomePage() {
       </div>
 
       {/* -------------------------------------------------- quick actions */}
+
       <section aria-labelledby="quick-actions-heading">
         <h2
           id="quick-actions-heading"
@@ -151,6 +176,7 @@ export default function StudentHomePage() {
         >
           What would help right now?
         </h2>
+
         <ul className="grid grid-cols-2 gap-3">
           {QUICK_ACTIONS.map((a) => (
             <li key={a.href}>
@@ -161,12 +187,21 @@ export default function StudentHomePage() {
                   a.className,
                 )}
               >
-                <span className="text-2xl leading-none" aria-hidden>
+                <span
+                  className="text-2xl leading-none"
+                  aria-hidden
+                >
                   {a.icon}
                 </span>
+
                 <span className="mt-3 block">
-                  <span className="block font-semibold">{a.label}</span>
-                  <span className="mt-0.5 block text-xs opacity-80">{a.body}</span>
+                  <span className="block font-semibold">
+                    {a.label}
+                  </span>
+
+                  <span className="mt-0.5 block text-xs opacity-80">
+                    {a.body}
+                  </span>
                 </span>
               </Link>
             </li>
@@ -174,9 +209,8 @@ export default function StudentHomePage() {
         </ul>
       </section>
 
-      
-
       {/* ----------------------------------------------------- recommended */}
+
       <section aria-labelledby="recommended-heading">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
           <div>
@@ -184,8 +218,11 @@ export default function StudentHomePage() {
               id="recommended-heading"
               className="text-lg font-semibold tracking-tight text-navy-900"
             >
-              {analysisOn ? "Recommended for you" : "Reading that might help"}
+              {analysisOn
+                ? "Recommended for you"
+                : "Reading that might help"}
             </h2>
+
             <p className="muted mt-0.5 text-sm">
               {analysisOn
                 ? recentTags.length
@@ -206,15 +243,30 @@ export default function StudentHomePage() {
                   href="/student/support"
                   className="card flex min-h-11 items-start gap-3 p-4 transition-colors hover:border-teal-200 hover:bg-teal-50/40"
                 >
-                  <span className="text-xl leading-none" aria-hidden>
+                  <span
+                    className="text-xl leading-none"
+                    aria-hidden
+                  >
                     📄
                   </span>
+
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium text-navy-900">{r.title}</span>
-                    <span className="muted mt-0.5 block text-sm">{r.summary}</span>
+                    <span className="block font-medium text-navy-900">
+                      {r.title}
+                    </span>
+
+                    <span className="muted mt-0.5 block text-sm">
+                      {r.summary}
+                    </span>
+
                     <span className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <Badge tone="teal">{r.category}</Badge>
-                      <span className="muted text-xs">{r.minutes} min read</span>
+                      <Badge tone="teal">
+                        {r.category}
+                      </Badge>
+
+                      <span className="muted text-xs">
+                        {r.minutes} min read
+                      </span>
                     </span>
                   </span>
                 </Link>
@@ -224,54 +276,21 @@ export default function StudentHomePage() {
         ) : (
           <div className="card p-4">
             <p className="text-sm text-navy-700">
-              MindEase is not looking at your check-ins, so nothing is picked out for
-              you. The full library is still open to browse whenever you want it.
+              MindEase is not looking at your check-ins, so nothing
+              is picked out for you. The full library is still open
+              to browse whenever you want it.
             </p>
-            <LinkButton href="/student/support" className="mt-3">
+
+            <LinkButton
+              href="/student/support"
+              className="mt-3"
+            >
               Browse resources
             </LinkButton>
           </div>
         )}
       </section>
 
-      {/* -------------------------------------------------- privacy status */}
-      <section
-        className="rounded-2xl border border-info-200 bg-info-50/70 p-4"
-        aria-labelledby="privacy-status-heading"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2
-            id="privacy-status-heading"
-            className="flex items-center gap-2 text-sm font-semibold text-info-900"
-          >
-            <span aria-hidden>🛡️</span> Privacy status
-          </h2>
-          <Link
-            href="/student/settings"
-            className="text-sm font-medium text-info-900 underline underline-offset-2"
-          >
-            Change these
-          </Link>
-        </div>
-        <ul className="mt-2.5 flex flex-wrap gap-1.5">
-          {CONSENT_ORDER.map((key) => {
-            const on = state.consent[key];
-            return (
-              <li key={key}>
-                <Badge tone={on ? "mint" : "neutral"}>
-                  {CONSENT_COPY[key].label}
-                  <span className="sr-only">: </span>
-                  <span className="font-semibold">{on ? "ON" : "OFF"}</span>
-                </Badge>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="mt-2.5 text-xs text-info-900/80">
-          Everything above runs in this browser. Nothing is shared with a counsellor
-          until you ask for it and confirm exactly what goes.
-        </p>
-      </section>
     </div>
   );
 }
