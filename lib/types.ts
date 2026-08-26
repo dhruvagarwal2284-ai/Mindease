@@ -327,6 +327,22 @@ export interface A11ySettings {
   largeText: boolean;
 }
 
+/* ----------------------------------------------------------- peer chat */
+
+export interface PeerChatMessage {
+  id: string;
+  sender: "self" | "peer";
+  body: string;
+  createdAt: string;
+}
+
+export interface PeerChatSession {
+  id: string;
+  peerHandle: string;
+  startedAt: string;
+  messages: PeerChatMessage[];
+}
+
 /* -------------------------------------------------------------- app state */
 
 export interface AppState {
@@ -347,6 +363,8 @@ export interface AppState {
   blockedHandles: string[];
   /** the day on which the student last dismissed the support prompt */
   dismissedPromptOn?: string;
+  /** in-memory peer chat session, not persisted to localStorage */
+  peerChat: PeerChatSession | null;
   /** simulated failure switches for the Security UX / failure-state demo */
   simulate: { aiDown: boolean; offline: boolean };
 }

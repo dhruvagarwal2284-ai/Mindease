@@ -742,6 +742,7 @@ export function seedAudit(): AuditEntry[] {
 
 /* --------------------------------------------------------- initial states */
 
+/** A genuinely empty campus — no demo data, no personal data. */
 export function emptyState(): AppState {
   return {
     onboarded: false,
@@ -750,6 +751,26 @@ export function emptyState(): AppState {
     a11y: { highContrast: false, reducedMotion: false, largeText: false },
     checkIns: [],
     journal: [],
+    posts: [],
+    replies: [],
+    moderation: [],
+    audit: [],
+    alerts: [],
+    cases: [],
+    appointments: [],
+    notifications: [],
+    blockedHandles: [],
+    peerChat: null,
+    simulate: { aiDown: false, offline: false },
+  };
+}
+
+/** Demo install: a plausible campus, plus four weeks of the student's own history. */
+export function seededState(): AppState {
+  return {
+    ...emptyState(),
+    checkIns: seedCheckIns(),
+    journal: seedJournal(),
     posts: seedPosts(),
     replies: seedReplies(),
     moderation: seedModeration(),
@@ -758,16 +779,6 @@ export function emptyState(): AppState {
     cases: seedCases(),
     appointments: seedAppointments(),
     notifications: seedNotifications(),
-    blockedHandles: [],
-    simulate: { aiDown: false, offline: false },
   };
 }
 
-/** Fresh install: a plausible campus, plus four weeks of the student's own history. */
-export function seededState(): AppState {
-  return {
-    ...emptyState(),
-    checkIns: seedCheckIns(),
-    journal: seedJournal(),
-  };
-}

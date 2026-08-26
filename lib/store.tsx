@@ -31,6 +31,8 @@ import type {
   JournalEntry,
   ModerationDecision,
   MoodValue,
+  PeerChatMessage,
+  PeerChatSession,
   Post,
   ReactionKey,
   Reply,
@@ -127,6 +129,11 @@ interface StoreValue {
   ) => void;
   claimModeration: (id: string) => void;
 
+  /* peer chat */
+  startPeerChat: () => PeerChatSession;
+  sendPeerMessage: (body: string, sender?: "self" | "peer") => void;
+  endPeerChat: () => void;
+
   /* notifications */
   markNotificationRead: (id: string) => void;
   markAllRead: (audience: AppNotification["audience"]) => void;
@@ -146,7 +153,7 @@ interface StoreValue {
 const StoreContext = createContext<StoreValue | null>(null);
 
 function migrate(raw: unknown): AppState {
-  const base = seededState();
+  const base = emptyState();
   if (!raw || typeof raw !== "object") return base;
   const merged = { ...base, ...(raw as Partial<AppState>) };
   merged.consent = { ...base.consent, ...(merged.consent ?? {}) };
@@ -173,7 +180,7 @@ function migrate(raw: unknown): AppState {
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>(() => seededState());
+  const [state, setState] = useState<AppState>(() => emptyState());
   const [ready, setReady] = useState(false);
   const [locked, setLocked] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -186,7 +193,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setState(migrate(JSON.parse(raw)));
     } catch {
-      /* corrupt or unavailable storage — fall back to the seeded state */
+      /* corrupt or unavailable storage — fall back to the empty state */
     }
     setReady(true);
   }, []);
@@ -194,7 +201,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      // peerChat is session-scoped — strip it from persistence
+      const { peerChat: _, ...persistable } = state;
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable));
     } catch {
       /* quota or private mode — the session still works, it just will not persist */
     }
@@ -1056,6 +1065,43 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  /* ----------------------------------------------------------- peer chat */
+
+  const startPeerChat = useCallback(() => {
+    const hex = Math.random().toString(16).slice(2, 7).toUpperCase();
+    const session: PeerChatSession = {
+      id: uid("pc"),
+      peerHandle: `MindMate #${hex}`,
+      startedAt: new Date().toISOString(),
+      messages: [],
+    };
+    setState((p) => ({ ...p, peerChat: session }));
+    return session;
+  }, []);
+
+  const sendPeerMessage = useCallback(
+    (body: string, sender: "self" | "peer" = "self") => {
+      const msg: PeerChatMessage = {
+        id: uid("pm"),
+        sender,
+        body,
+        createdAt: new Date().toISOString(),
+      };
+      setState((p) => {
+        if (!p.peerChat) return p;
+        return {
+          ...p,
+          peerChat: { ...p.peerChat, messages: [...p.peerChat.messages, msg] },
+        };
+      });
+    },
+    [],
+  );
+
+  const endPeerChat = useCallback(() => {
+    setState((p) => ({ ...p, peerChat: null }));
+  }, []);
+
   /* -------------------------------------------------------- demo plumbing */
 
   const setSimulate = useCallback((key: "aiDown" | "offline", value: boolean) => {
@@ -1138,6 +1184,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setCaseStatus,
     resolveModeration,
     claimModeration,
+    startPeerChat,
+    sendPeerMessage,
+    endPeerChat,
     markNotificationRead,
     markAllRead,
     setSimulate,
