@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { MindEaseLogo } from "@/components/MindEaseLogo";
 import { Badge, Button, Drawer } from "@/components/ui";
 import { cx, relativeTime } from "@/lib/format";
 import { useStore } from "@/lib/store";
@@ -18,15 +20,26 @@ function NotificationBell({
 }) {
   const { state, markNotificationRead, markAllRead } = useStore();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const mine = state.notifications.filter((n) => n.audience === audience);
   const unread = mine.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close on outside click or Escape
   useEffect(() => {
     if (!open) return;
     const handleDown = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node) &&
+        panelRef.current &&
+        !panelRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -67,22 +80,24 @@ function NotificationBell({
         ) : null}
       </button>
 
-      {open ? (
-        <>
-          {/* Full Screen Backdrop with Blur */}
-          <div
-            className="fixed inset-0 z-[120] bg-navy-950/40 backdrop-blur-sm transition-opacity animate-fade-in"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
+      {open && mounted
+        ? createPortal(
+            <>
+              {/* Full Screen Backdrop with Blur */}
+              <div
+                className="fixed inset-0 z-[150] bg-navy-950/45 backdrop-blur-md transition-opacity animate-fade-in"
+                onClick={() => setOpen(false)}
+                aria-hidden="true"
+              />
 
-          {/* Floating High-Z Notification Panel */}
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Notifications"
-            className="fixed right-3 sm:right-6 top-16 z-[130] w-[calc(100vw-1.5rem)] sm:w-96 max-w-md bg-white rounded-2xl shadow-2xl border border-navy-200 overflow-hidden max-h-[85vh] flex flex-col animate-fade-up"
-          >
+              {/* Floating High-Z Notification Panel */}
+              <div
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Notifications"
+                className="fixed right-3 sm:right-6 top-16 z-[160] w-[calc(100vw-1.5rem)] sm:w-96 max-w-md bg-white rounded-2xl shadow-2xl border border-navy-200 overflow-hidden max-h-[85vh] flex flex-col animate-fade-up"
+              >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-navy-100 px-4 py-3 bg-navy-50/60 shrink-0">
               <div className="flex items-center gap-2">
@@ -214,8 +229,10 @@ function NotificationBell({
               🔒 Previews never show sensitive personal content.
             </div>
           </div>
-        </>
-      ) : null}
+        </>,
+        document.body,
+      )
+    : null}
     </div>
   );
 }
@@ -246,15 +263,7 @@ export function StudentTopBar() {
   return (
     <header className="no-print sticky top-0 z-30 border-b border-navy-100 bg-white/90 backdrop-blur lg:hidden">
       <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
-        <Link href="/student/home" className="flex items-center gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-900 text-sm font-bold text-white"
-            aria-hidden
-          >
-            M
-          </span>
-          <span className="font-semibold tracking-tight text-navy-900">MindEase</span>
-        </Link>
+        <MindEaseLogo href="/student/home" size="sm" />
         <span className="muted hidden truncate text-xs sm:inline">
           {state.identity?.handle}
         </span>
@@ -263,11 +272,9 @@ export function StudentTopBar() {
           <Link
             href="/student/settings"
             aria-label="Settings"
-            className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-navy-100"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-navy-600 hover:bg-navy-100"
           >
-            <span aria-hidden className="text-lg">
-              ⚙️
-            </span>
+            ⚙
           </Link>
         </div>
       </div>
@@ -279,8 +286,8 @@ export function StudentBottomNav() {
   const pathname = usePathname();
   return (
     <nav
-      aria-label="Primary"
-      className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      aria-label="Student primary"
+      className="no-print fixed right-0 bottom-0 left-0 z-30 border-t border-navy-100 bg-white/95 px-2 backdrop-blur lg:hidden"
     >
       <ul className="mx-auto flex max-w-3xl">
         {STUDENT_TABS.map((t) => {
@@ -324,22 +331,9 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      <Link
-        href="/student/home"
-        onClick={onNavigate}
-        className="flex items-center gap-2.5 px-5 py-5"
-      >
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-navy-900 text-sm font-bold text-white"
-          aria-hidden
-        >
-          M
-        </span>
-        <span>
-          <span className="block leading-tight font-semibold text-navy-900">MindEase</span>
-          <span className="block text-xs text-teal-800">Student portal</span>
-        </span>
-      </Link>
+      <div className="px-5 py-5">
+        <MindEaseLogo href="/student/home" size="md" subtitle="Student Portal" />
+      </div>
 
       <nav aria-label="Student sections" className="flex-1 px-3">
         <ul className="space-y-1">
@@ -470,22 +464,9 @@ export function CounsellorSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      <Link
-        href="/counsellor/dashboard"
-        onClick={onNavigate}
-        className="flex items-center gap-2.5 px-5 py-5"
-      >
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-pro-700 text-sm font-bold text-white"
-          aria-hidden
-        >
-          M
-        </span>
-        <span>
-          <span className="block leading-tight font-semibold text-navy-900">MindEase</span>
-          <span className="block text-xs text-pro-700">Counsellor platform</span>
-        </span>
-      </Link>
+      <div className="px-5 py-5">
+        <MindEaseLogo href="/counsellor/dashboard" size="md" subtitle="Counsellor Platform" />
+      </div>
 
       <nav aria-label="Counsellor sections" className="flex-1 px-3">
         <ul className="space-y-0.5">

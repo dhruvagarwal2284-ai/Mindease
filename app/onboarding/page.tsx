@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MindEaseLogo } from "@/components/MindEaseLogo";
 import { DataPermissionCard } from "@/components/privacy";
 import { Button, Chip, SkeletonCard } from "@/components/ui";
 import { cx } from "@/lib/format";
@@ -144,13 +145,10 @@ export default function OnboardingPage() {
         {/* ---------------------------------------------------- 1 welcome */}
         {step === 0 ? (
           <section aria-labelledby="s0">
-            <span
-              className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy-900 text-lg font-bold text-white"
-              aria-hidden
-            >
-              M
-            </span>
-            <h1 id="s0" className="mt-6 text-3xl font-semibold tracking-tight text-navy-900">
+            <div className="mb-4">
+              <MindEaseLogo showText={true} size="lg" subtitle="Campus Wellbeing" />
+            </div>
+            <h1 id="s0" className="mt-4 text-3xl font-bold tracking-tight text-navy-900">
               Welcome to MindEase
             </h1>
             <p className="mt-3 text-base text-navy-700">
