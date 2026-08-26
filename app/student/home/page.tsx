@@ -35,10 +35,10 @@ const QUICK_ACTIONS: {
   className: string;
 }[] = [
   {
-    href: "/student/support/request",
+    href: "/student/peer",
     label: "Talk to someone",
-    body: "Ask a campus counsellor for a conversation, on your terms.",
-    icon: "🤝",
+    body: "Chat anonymously with a peer, one-to-one, right now.",
+    icon: "💬",
     className:
       "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-300 hover:bg-teal-100/70",
   },
@@ -57,6 +57,14 @@ const QUICK_ACTIONS: {
     icon: "🧭",
     className:
       "border-mint-200 bg-mint-50 text-mint-900 hover:border-mint-300 hover:bg-mint-100/70",
+  },
+  {
+    href: "/student/support/request",
+    label: "Book a counsellor",
+    body: "Schedule a formal appointment with campus counselling.",
+    icon: "🤝",
+    className:
+      "border-pro-200 bg-pro-50 text-pro-900 hover:border-pro-300 hover:bg-pro-100/70",
   },
   {
     href: "/student/help",
@@ -120,9 +128,6 @@ export default function StudentHomePage() {
         <h1 className="text-2xl font-semibold tracking-tight text-navy-900">
           {state.identity?.handle ?? "MindMate"}
         </h1>
-        <p className="muted mt-1 text-sm">
-          What support could you use right now? Nothing here is compulsory.
-        </p>
         <AnonymousModeBar className="mt-3" />
       </header>
 
@@ -149,7 +154,7 @@ export default function StudentHomePage() {
         >
           What would help right now?
         </h2>
-        <ul className="grid grid-cols-2 gap-3">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {QUICK_ACTIONS.map((a) => (
             <li key={a.href}>
               <Link
@@ -183,7 +188,7 @@ export default function StudentHomePage() {
               Your mood pattern
             </h2>
             <p className="muted mt-0.5 text-sm">
-              Your own check-ins, kept on this device. Not a score, not a rating.
+              Private to this device.
             </p>
           </div>
           <Link
@@ -201,8 +206,7 @@ export default function StudentHomePage() {
             </p>
             <p className="mt-1 font-medium text-navy-900">Nothing to show yet</p>
             <p className="muted mx-auto mt-1 max-w-sm text-sm">
-              Two check-ins are enough to start seeing a shape. There is no streak to
-              keep and nothing to catch up on.
+              Complete two check-ins to see a pattern here.
             </p>
           </div>
         ) : (
@@ -228,11 +232,9 @@ export default function StudentHomePage() {
             <p className="muted mt-0.5 text-sm">
               {analysisOn
                 ? recentTags.length
-                  ? `Picked from the topics you tapped recently: ${recentTags
-                      .slice(0, 3)
-                      .join(", ")}.`
-                  : "A place to start until you tell us more."
-                : "Support analysis is off, so this is just the general shelf."}
+                  ? "Based on your recent check-ins."
+                  : null
+                : "General resources — analysis is off."}
             </p>
           </div>
         </div>
@@ -306,10 +308,6 @@ export default function StudentHomePage() {
             );
           })}
         </ul>
-        <p className="mt-2.5 text-xs text-info-900/80">
-          Everything above runs in this browser. Nothing is shared with a counsellor
-          until you ask for it and confirm exactly what goes.
-        </p>
       </section>
     </div>
   );
