@@ -202,13 +202,119 @@ export function OfflineBanner() {
 
 /* -------------------------------------------------------------- student   */
 
-const STUDENT_TABS = [
-  { href: "/student/home", label: "Home", icon: "🏠" },
-  { href: "/student/community", label: "Community", icon: "💬" },
-  { href: "/student/journal", label: "Journal", icon: "📓" },
-  { href: "/student/support", label: "Support", icon: "🤝" },
-  { href: "/student/help", label: "Help", icon: "🆘", urgent: true },
-];
+// const STUDENT_TABS = [
+//   { href: "/student/home", label: "Home", icon: "🏠" },
+//   { href: "/student/community", label: "Community", icon: "💬" },
+//   { href: "/student/journal", label: "Journal", icon: "📓" },
+//   { href: "/student/support", label: "Support", icon: "🤝" },
+//   { href: "/student/help", label: "Help", icon: "🆘", urgent: true },
+// ];
+
+/* -------------------------------------------------------------- student   */
+
+// 🚀 Dynamic Tabs based on Support Mode
+// function getStudentTabs(supportMode: "seeking" | "supporting") {
+//   const baseTabs = [
+//     { href: "/student/home", label: "Home", icon: "🏠" },
+//     { href: "/student/community", label: "Community", icon: "💬" },
+//     { href: "/student/journal", label: "Journal", icon: "📓" },
+//   ];
+
+//   if (supportMode === "supporting") {
+//     // Jab peer mode me ho toh Peer Dashboard dikhega
+//     return [
+//       ...baseTabs,
+//       { href: "/student/peer", label: "Peer Hub", icon: "🫂" }, 
+//     ];
+//   }
+
+//   // Normal student mode
+//   return [
+//     ...baseTabs,
+//     { href: "/student/support", label: "Support", icon: "🤝" },
+//     { href: "/student/help", label: "Help", icon: "🆘", urgent: true },
+//   ];
+// }
+
+// function getStudentTabs(supportMode: string): StudentTab[] {
+//   const baseTabs = [
+//     { href: "/student/home", label: "Home", icon: "🏠" },
+//     { href: "/student/community", label: "Community", icon: "💬" },
+//     { href: "/student/journal", label: "Journal", icon: "📓" },
+//   ];
+
+//   if (supportMode === "supporting") {
+//     // 🔥 Sirf supporters ko Peer Hub aur Leaderboard dikhega
+//     return [
+//       ...baseTabs,
+//       { href: "/student/peer", label: "Peer Hub", icon: "🫂" },
+//       { href: "/student/leaderboard", label: "Leaderboard", icon: "🏆" },
+//     ];
+//   }
+
+//   // 🌱 Seeking walo ko normal Support aur Help dikhega
+//   return [
+//     ...baseTabs,
+//     { href: "/student/support", label: "Support", icon: "🤝" },
+//     { href: "/student/help", label: "Help", icon: "🆘", urgent: true },
+//   ];
+// }
+
+// 1. TypeScript ko bata rahe hain ki Tab kaisa dikhta hai (agar delete ho gaya ho toh wapas daal de)
+// type StudentTab = {
+//   href: string;
+//   label: string;
+//   icon: string;
+//   urgent?: boolean;
+// };
+
+// // 2. Updated Function: Ab Support aur SOS sabko dikhega!
+// function getStudentTabs(supportMode: string): StudentTab[] {
+//   // Yeh 4 tabs hamesha dikhenge (chahe koi bhi mode ho)
+//   const tabs = [
+//     { href: "/student/home", label: "Home", icon: "🏠" },
+//     { href: "/student/community", label: "Community", icon: "💬" },
+//     { href: "/student/journal", label: "Journal", icon: "📓" },
+//     { href: "/student/support", label: "Support", icon: "🤝" }, // 🔥 Support ab sabke liye!
+//   ];
+
+//   // Agar user Supporter hai, toh usko 2 extra tabs milenge
+//   if (supportMode === "supporting") {
+//     tabs.push({ href: "/student/peer", label: "Peer Hub", icon: "🫂" });
+//     tabs.push({ href: "/student/leaderboard", label: "Leaderboard", icon: "🏆" });
+//   }
+
+//   // SOS/Help button hamesha list ke aakhri mein aayega, dono modes ke liye
+//   tabs.push({ href: "/student/help", label: "Help", icon: "🆘", urgent: true });
+
+//   return tabs;
+// }
+
+function getStudentTabs(supportMode: string): StudentTab[] {
+  // Yeh 3 tabs hamesha dikhenge
+  const tabs = [
+    { href: "/student/home", label: "Home", icon: "🏠" },
+    { href: "/student/community", label: "Community", icon: "💬" },
+    { href: "/student/journal", label: "Journal", icon: "📓" },
+  ];
+
+  // Agar user Supporter hai:
+  if (supportMode === "supporting") {
+    tabs.push({ href: "/student/peer", label: "Peer Hub", icon: "🫂" });
+    tabs.push({ href: "/student/leaderboard", label: "Leaderboard", icon: "🏆" });
+  } 
+  // Agar user Seeking (Normal) mode mein hai:
+  else {
+    tabs.push({ href: "/student/peer", label: "Talk to someone", icon: "💭" }); // 🔥 Naya tab yahan aa gaya!
+  }
+
+  // Support aur Help dono modes mein niche dikhenge
+  tabs.push({ href: "/student/support", label: "Support", icon: "🤝" });
+  tabs.push({ href: "/student/help", label: "Help", icon: "🆘", urgent: true });
+
+  return tabs;
+}
+
 
 export function StudentTopBar() {
   const { state } = useStore();
@@ -246,13 +352,14 @@ export function StudentTopBar() {
 
 export function StudentBottomNav() {
   const pathname = usePathname();
+  const { state } = useStore();
   return (
     <nav
       aria-label="Primary"
       className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
-      <ul className="mx-auto flex max-w-3xl">
-        {STUDENT_TABS.map((t) => {
+      <ul className="space-y-1">
+        {getStudentTabs(state.supportMode).map((t) => {
           const active = pathname.startsWith(t.href);
           return (
             <li key={t.href} className="flex-1">
@@ -312,7 +419,7 @@ export function StudentSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav aria-label="Student sections" className="flex-1 px-3">
         <ul className="space-y-1">
-          {STUDENT_TABS.map((t) => {
+          {getStudentTabs(state.supportMode).map ((t)=> {
             const active = pathname.startsWith(t.href);
             return (
               <li key={t.href}>

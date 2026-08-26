@@ -34,6 +34,58 @@ function greetingFor(date: Date): string {
 
 /* ---------------------------------------------------------- quick actions */
 
+// const QUICK_ACTIONS: {
+//   href: string;
+//   label: string;
+//   body: string;
+//   icon: string;
+//   className: string;
+// }[] = [
+//   {
+//     href: "/student/peer",
+//     label: "Talk to someone",
+//     body: "Chat anonymously with a peer, one-to-one, right now.",
+//     icon: "💬",
+//     className:
+//       "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-300 hover:bg-teal-100/70",
+//   },
+//   {
+//     href: "/student/journal/new",
+//     label: "Write privately",
+//     body: "A page only you can read. Nothing leaves this device.",
+//     icon: "📓",
+//     className:
+//       "border-info-200 bg-info-50 text-info-900 hover:border-info-300 hover:bg-info-100/70",
+//   },
+//   {
+//     href: "/student/support",
+//     label: "Explore resources",
+//     body: "Short, practical reads for the thing that is heaviest today.",
+//     icon: "🧭",
+//     className:
+//       "border-mint-200 bg-mint-50 text-mint-900 hover:border-mint-300 hover:bg-mint-100/70",
+//   },
+//   {
+//     href: "/student/support/request",
+//     label: "Book a counsellor",
+//     body: "Schedule a formal appointment with campus counselling.",
+//     icon: "🤝",
+//     className:
+//       "border-pro-200 bg-pro-50 text-pro-900 hover:border-pro-300 hover:bg-pro-100/70",
+//   },
+//   {
+//     href: "/student/help",
+//     label: "Get help now",
+//     body: "If things feel urgent, this is the fastest way through.",
+//     icon: "🆘",
+//     className:
+//       "border-urgent-200 bg-urgent-50 text-urgent-900 hover:border-urgent-300 hover:bg-urgent-100/70",
+//   },
+// ];
+
+/* ------------------------------------------------------------------- page */
+/* ---------------------------------------------------------- quick actions */
+
 const QUICK_ACTIONS: {
   href: string;
   label: string;
@@ -41,14 +93,6 @@ const QUICK_ACTIONS: {
   icon: string;
   className: string;
 }[] = [
-  {
-    href: "/student/peer",
-    label: "Talk to someone",
-    body: "Chat anonymously with a peer, one-to-one, right now.",
-    icon: "💬",
-    className:
-      "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-300 hover:bg-teal-100/70",
-  },
   {
     href: "/student/journal/new",
     label: "Write privately",
@@ -58,14 +102,6 @@ const QUICK_ACTIONS: {
       "border-info-200 bg-info-50 text-info-900 hover:border-info-300 hover:bg-info-100/70",
   },
   {
-    href: "/student/support",
-    label: "Explore resources",
-    body: "Short, practical reads for the thing that is heaviest today.",
-    icon: "🧭",
-    className:
-      "border-mint-200 bg-mint-50 text-mint-900 hover:border-mint-300 hover:bg-mint-100/70",
-  },
-  {
     href: "/student/support/request",
     label: "Book a counsellor",
     body: "Schedule a formal appointment with campus counselling.",
@@ -73,18 +109,7 @@ const QUICK_ACTIONS: {
     className:
       "border-pro-200 bg-pro-50 text-pro-900 hover:border-pro-300 hover:bg-pro-100/70",
   },
-  {
-    href: "/student/help",
-    label: "Get help now",
-    body: "If things feel urgent, this is the fastest way through.",
-    icon: "🆘",
-    className:
-      "border-urgent-200 bg-urgent-50 text-urgent-900 hover:border-urgent-300 hover:bg-urgent-100/70",
-  },
 ];
-
-/* ------------------------------------------------------------------- page */
-
 export default function StudentHomePage() {
   const {
     ready,
