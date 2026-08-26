@@ -16,7 +16,7 @@ try {
   }
 
   const logoSrc =
-    "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787768179019.png";
+    "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787773964767.png";
   if (fs.existsSync(logoSrc)) {
     fs.copyFileSync(logoSrc, path.join(destDir, "mindease-logo.png"));
     fs.copyFileSync(logoSrc, path.join(process.cwd(), "public", "logo.png"));
