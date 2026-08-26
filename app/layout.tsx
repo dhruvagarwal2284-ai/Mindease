@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { LockScreen } from "@/components/privacy";
 import { Toaster } from "@/components/ui";
 import { StoreProvider } from "@/lib/store";
@@ -16,15 +17,36 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" data-contrast="normal" data-motion="full" data-text="normal">
+    <html
+      lang="en"
+      data-theme="ocean"
+      data-contrast="normal"
+      data-motion="full"
+      data-text="normal"
+    >
       <body>
+        <Script id="font-preview" strategy="beforeInteractive">
+          {`(function () {
+            var font = new URLSearchParams(window.location.search).get("font");
+            if (["modern", "editorial", "friendly"].includes(font || "")) {
+              document.documentElement.dataset.font = font;
+            }
+          })();`}
+        </Script>
+
         <StoreProvider>
           <a href="#main" className="skip-link">
             Skip to main content
           </a>
+
           {children}
+
           <LockScreen />
           <Toaster />
         </StoreProvider>
