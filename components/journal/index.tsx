@@ -55,45 +55,76 @@ export function LockIndicator({ shared }: { shared?: boolean }) {
 
 /* ----------------------------------------------------------- JournalCard */
 
-export function JournalCard({ entry }: { entry: JournalEntry }) {
-  const m = moodDef(entry.mood);
-  return (
-    <Link
-      href={`/student/journal/${entry.id}`}
-      className="block rounded-2xl border border-navy-100 bg-white p-4 transition-colors hover:border-info-300 hover:bg-info-50/40"
-    >
+export function JournalCard({ 
+  entry, 
+  onClick, 
+  isSelected 
+}: { 
+  entry: JournalEntry;
+  onClick?: () => void;
+  isSelected?: boolean;
+}) {
+  const m = moodDef(entry.mood ?? 3); // Fallback if mood is missing
+  
+  const cardContent = (
+    <>
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-navy-900">
-            {formatDay(isoDay(new Date(entry.createdAt)))}
-            {entry.title ? (
-              <span className="muted font-normal"> · {entry.title}</span>
-            ) : null}
-          </p>
+        <div className="min-w-0 flex-1">
+          {/* ✅ FIX: Heading is now prominent and clear */}
+          <h3 className="text-base font-bold text-navy-900 truncate">
+            {entry.title?.trim() ? entry.title : "Untitled Entry"}
+          </h3>
           <p className="muted mt-0.5 flex items-center gap-1.5 text-xs">
+            {formatDay(isoDay(new Date(entry.createdAt || Date.now())))} 
+            <span aria-hidden>·</span>
             <span aria-hidden>{m.emoji}</span> {m.label}
           </p>
         </div>
         <span
           className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{ background: MOOD_COLOR[entry.mood] }}
+          style={{ background: MOOD_COLOR[entry.mood ?? 3] }}
           aria-hidden
         />
       </div>
 
-      <p className="mt-2.5 text-sm leading-relaxed text-navy-700">
-        {entry.body?.trim() ? excerpt(entry.body, 150) : "(empty entry)"}
+      {/* ✅ FIX: Body content formatting so it looks good inside the card */}
+      <p className="mt-2.5 text-sm leading-relaxed text-navy-700 line-clamp-2">
+        {entry.body?.trim() ? excerpt(entry.body, 150) : <span className="italic opacity-50">No content...</span>}
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {entry.isDraft ? <Badge tone="neutral">Draft</Badge> : null}
         {entry.sharedWithCounsellor ? <Badge tone="amber">Shared</Badge> : null}
         {entry.tags?.map((t) => (
-          <span key={t} className="muted text-xs">
+          <span key={t} className="muted text-xs bg-navy-50 border border-navy-100 px-2 py-0.5 rounded-md">
             {t}
           </span>
         ))}
       </div>
+    </>
+  );
+
+  // ✅ FIX: Added selection styling for side-by-side active view
+  const containerClasses = cx(
+    "block w-full text-left rounded-2xl border p-4 transition-all duration-200",
+    isSelected
+      ? "border-info-500 bg-info-50 shadow-md ring-1 ring-info-300" // Active state
+      : "border-navy-100 bg-white hover:border-info-300 hover:bg-info-50/40"
+  );
+
+  // ✅ FIX: If onClick is provided, behave as a button (so it opens on the side instead of routing)
+  if (onClick) {
+    return (
+      <button onClick={onClick} className={containerClasses}>
+        {cardContent}
+      </button>
+    );
+  }
+
+  // Fallback to Link if no onClick is provided
+  return (
+    <Link href={`/student/journal/${entry.id}`} className={containerClasses}>
+      {cardContent}
     </Link>
   );
 }
@@ -104,7 +135,6 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
   const router = useRouter();
   const { toast, state } = useStore();
   
-  // Tera user handle Firebase me link karne ke liye
   const myHandle = state.identity?.handle ?? "MindMate";
 
   const [entryId, setEntryId] = useState<string | undefined>(entry?.id);
@@ -118,9 +148,8 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
 
   const dirty = useRef(false);
 
-  // 🔥 FIREBASE CORE SAVE FUNCTION (Create & Edit dono handle karega)
+  // 🔥 FIREBASE CORE SAVE FUNCTION 
   const handleFirebaseSave = async (isDraftStatus: boolean) => {
-    // Agar entryId pehle se hai toh wahi update karo, warna naya ID banao
     const docRef = entryId ? doc(db, "journals", entryId) : doc(collection(db, "journals"));
     const currentId = docRef.id;
 
@@ -132,11 +161,9 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
       tags,
       isDraft: isDraftStatus,
       updatedAt: new Date().toISOString(),
-      // Agar naya bana rahe hain tabhi createdAt daalo
       ...(!entryId && { createdAt: new Date().toISOString() }),
     };
 
-    // Firebase pe save/update maro (merge: true se existing data overwrite nahi hota unnecessarily)
     await setDoc(docRef, dataToSave, { merge: true });
     
     if (!entryId) setEntryId(currentId);
@@ -150,7 +177,7 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
     
     const t = window.setTimeout(async () => {
       try {
-        await handleFirebaseSave(true); // Autosave hamesha Draft banke save hoga
+        await handleFirebaseSave(true);
         setSavedAt(new Date().toLocaleTimeString(undefined, {
           hour: "numeric",
           minute: "2-digit",
@@ -162,7 +189,7 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
     }, 2500);
     
     return () => window.clearTimeout(t);
-  }, [title, body, entryMood, tags, entryId]); // removed local saveJournal dependency
+  }, [title, body, entryMood, tags, entryId]);
 
   const mark = () => {
     dirty.current = true;
@@ -185,7 +212,7 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
         isDraft ? "Draft saved to cloud ☁️" : "Entry securely saved ☁️",
         "success"
       );
-      router.push(`/student/journal`); // Save hote hi wapas Journal list pe
+      router.push(`/student/journal`);
     } catch (error) {
       toast("Failed to save", "warning");
     }
@@ -207,9 +234,10 @@ export function JournalEditor({ entry }: { entry?: JournalEntry }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* ✅ FIX: min-h-[32px] ensures the header height is fixed, preventing layout shifting */}
+      <div className="flex flex-wrap items-center justify-between gap-2 min-h-[32px]">
         <LockIndicator shared={entry?.sharedWithCounsellor} />
-        <p className="muted text-xs" aria-live="polite">
+        <p className="muted text-xs min-h-[20px]" aria-live="polite">
           {savedAt
             ? `Cloud draft saved at ${savedAt}`
             : "Saves securely to cloud as you write"}
