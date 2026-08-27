@@ -4,44 +4,16 @@ import Link from "next/link";
 import React from "react";
 import { MindEaseLogo } from "@/components/MindEaseLogo";
 
-export const AFFIRMATIVE_QUOTES = [
-  "A quiet place to land.",
-  "Help, without the noise.",
-  "One step is enough today.",
-  "Your story stays yours.",
-  "Private by design.",
-  "Speak freely. Stay unseen.",
-  "Anonymous, always your call.",
-  "Students, supporting students.",
-  "You reach out. We listen.",
-  "Someone's here when you are.",
-  "Care that respects your privacy.",
-  "Support without exposure.",
-  "Mental health, minus the risk.",
-];
-
-export const DEFAULT_HEADER_MICRO_TAGLINE = "A quiet place to land.";
-
 interface LandingHeaderProps {
-  microTagline?: string;
   showEmergencyBanner?: boolean;
 }
 
 export function LandingHeader({
-  microTagline,
   showEmergencyBanner = true,
 }: LandingHeaderProps) {
   const [isBannerVisible, setIsBannerVisible] = React.useState(showEmergencyBanner);
   const [isVisible, setIsVisible] = React.useState(true);
-  const [tagline, setTagline] = React.useState(microTagline ?? DEFAULT_HEADER_MICRO_TAGLINE);
   const lastScrollYRef = React.useRef(0);
-
-  React.useEffect(() => {
-    if (!microTagline) {
-      const randomIndex = Math.floor(Math.random() * AFFIRMATIVE_QUOTES.length);
-      setTagline(AFFIRMATIVE_QUOTES[randomIndex]);
-    }
-  }, [microTagline]);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -64,7 +36,7 @@ export function LandingHeader({
 
   return (
     <div
-      className={`w-full sticky top-0 z-40 bg-surface/85 backdrop-blur-2xl backdrop-saturate-150 border-b border-navy-200/50 shadow-xs transition-transform duration-300 ease-in-out ${
+      className={`w-full sticky top-0 z-40 bg-surface/90 backdrop-blur-2xl backdrop-saturate-150 border-b border-navy-200/60 shadow-xs transition-transform duration-300 ease-in-out ${
         isVisible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
@@ -115,17 +87,44 @@ export function LandingHeader({
         </div>
       ) : null}
 
-      {/* 2. Simplified Header Bar: Exactly 3 elements */}
+      {/* 2. Header Bar: Logo, Navigation Menu, Primary CTA */}
       <header className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4">
-        {/* Element 1: Official Logo + Subtitle */}
+        {/* Element 1: Official Logo */}
         <MindEaseLogo subtitle="Student Wellbeing" size="md" />
 
-        {/* Element 2: Affirmative Micro-Tagline */}
-        <div className="hidden sm:flex items-center justify-center flex-1 text-center px-4">
-          <p className="text-sm font-medium text-navy-800/90 italic tracking-wide">
-            &ldquo;{tagline}&rdquo;
-          </p>
-        </div>
+        {/* Element 2: Real Navigation Links (Visible on sm:) */}
+        <nav aria-label="Main Navigation" className="hidden sm:flex items-center gap-1 md:gap-2">
+          <Link
+            href="/"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+          >
+            Home
+          </Link>
+          <Link
+            href="/student/peer"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+          >
+            Peer Support
+          </Link>
+          <Link
+            href="/student/journal"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+          >
+            Journal
+          </Link>
+          <Link
+            href="/student/support"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+          >
+            Resources
+          </Link>
+          <Link
+            href="/student/support/request"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+          >
+            Counselling
+          </Link>
+        </nav>
 
         {/* Element 3: Single Primary Button */}
         <div className="flex items-center shrink-0">
@@ -142,22 +141,15 @@ export function LandingHeader({
 }
 
 export function LandingFooter() {
-  const [footerQuote, setFooterQuote] = React.useState("Your story stays yours.");
-
-  React.useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * AFFIRMATIVE_QUOTES.length);
-    setFooterQuote(AFFIRMATIVE_QUOTES[randomIndex]);
-  }, []);
-
   return (
     <footer className="w-full bg-slate-900 text-slate-200 pt-14 pb-10 relative z-20 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-12">
-          {/* Column 1: Brand, Affirmative Quote & Description */}
+          {/* Column 1: Brand, Static Affirmative Statement & Description */}
           <div className="space-y-4">
             <MindEaseLogo subtitle="Student Wellbeing" size="md" variant="light" />
-            <p className="text-sm text-teal-300 font-medium italic leading-relaxed">
-              &ldquo;{footerQuote}&rdquo;
+            <p className="text-sm text-teal-300 font-medium leading-relaxed">
+              Support you can reach on your own terms, without giving up your privacy.
             </p>
             <p className="text-xs text-slate-400 leading-relaxed">
               Privacy-first mental health support system for higher education institutions. Providing students with secure peer support and consent-driven professional counselling.
