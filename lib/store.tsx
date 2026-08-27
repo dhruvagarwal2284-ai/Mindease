@@ -74,6 +74,8 @@ interface StoreValue {
     supportMode?: SupportRoleMode,
   ) => void;
   regenerateIdentity: () => AnonymousIdentity;
+  // 🔥 FIX: setIdentity yahan define kar diya
+  setIdentity: (identity: AnonymousIdentity) => void;
   setConsent: (key: ConsentKey, value: boolean) => void;
   setA11y: (key: keyof A11ySettings, value: boolean) => void;
   setSupportMode: (mode: SupportRoleMode) => void;
@@ -398,6 +400,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     [audit],
   );
+
+  // 🔥 FIX: setIdentity ka actual function logic yahan likh diya
+  const setIdentity = useCallback((identity: AnonymousIdentity) => {
+    setState((p) => ({ ...p, identity }));
+  }, []);
 
   const setSupportMode = useCallback((mode: SupportRoleMode) => {
     setState((p) => ({ ...p, supportMode: mode }));
@@ -1237,6 +1244,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     completeOnboarding,
     regenerateIdentity,
+    setIdentity, // 🔥 FIX: setIdentity yahan expose kar diya
     setConsent,
     setA11y,
     setSupportMode,
