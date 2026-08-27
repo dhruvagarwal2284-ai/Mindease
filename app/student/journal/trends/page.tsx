@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
+// 🔥 Firebase imports
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 import { DataTableView, MoodTimeline, WeeklyMoodBars } from "@/components/charts";
 import { AiUnavailable, AnalysisOff } from "@/components/support";
 import {
@@ -18,10 +22,51 @@ import { shouldPromptStudent } from "@/lib/support-indicator";
 
 export default function MoodTrendsPage() {
   const { ready, state, indicator } = useStore();
+  const myHandle = state.identity?.handle ?? "MindMate";
+
+  // 🔥 Firebase States
+  const [entries, setEntries] = useState<any[]>([]);
+  const [loadingFirebase, setLoadingFirebase] = useState(true);
+
+  // 1. FIREBASE SE DATA FETCH KARNA
+  useEffect(() => {
+    if (!myHandle) return;
+
+    const q = query(collection(db, "journals"), where("userId", "==", myHandle));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setEntries(fetched);
+      setLoadingFirebase(false);
+    });
+
+    return () => unsubscribe();
+  }, [myHandle]);
+
+  // 2. DATA FORMATTING FOR GRAPH & TABLES
+  const firebaseCheckIns = useMemo(() => {
+    const validEntries = entries.filter((e) => e.mood !== undefined);
+    
+    return validEntries.map((e, i) => {
+      const rawDate = e.createdAt || new Date().toISOString();
+      const cleanDate = rawDate.split("T")[0]; // YYYY-MM-DD
+
+      return {
+        id: e.id || `fallback-id-${i}`,
+        date: cleanDate,
+        mood: e.mood,
+        tags: e.tags || [],
+      };
+    }).sort((a, b) => a.date.localeCompare(b.date)); 
+  }, [entries]);
 
   const summary = useMemo(() => {
     const cutoff = isoDay(daysAgo(29));
-    const recent = state.checkIns.filter((c) => c.date >= cutoff);
+    // 🔥 Yahan state.checkIns ki jagah firebaseCheckIns use kiya
+    const recent = firebaseCheckIns.filter((c) => c.date >= cutoff);
     const counts = new Map<string, number>();
     for (const c of recent) for (const t of c.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
     const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
@@ -29,16 +74,17 @@ export default function MoodTrendsPage() {
       ? recent.reduce((s, c) => s + c.mood, 0) / recent.length
       : 0;
     return { recent, top, avg };
-  }, [state.checkIns]);
+  }, [firebaseCheckIns]);
 
-  if (!ready) return <SkeletonCard />;
+  if (!ready || loadingFirebase) return <SkeletonCard />;
 
-  const rows = [...state.checkIns]
+  // 🔥 Table data bhi Firebase se aayega
+  const rows = [...firebaseCheckIns]
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 30)
     .map((c) => [
       formatDayShort(c.date),
-      `${moodDef(c.mood).emoji} ${moodDef(c.mood).label}`,
+      `${moodDef(c.mood as any).emoji} ${moodDef(c.mood as any).label}`,
       c.tags.join(", ") || "—",
     ]);
 
@@ -55,19 +101,20 @@ export default function MoodTrendsPage() {
           Your check-in history
         </h1>
         <p className="muted mt-1 text-sm">
-          A record of what you told us, kept on this device. It is not a score and it is not
+          A record of what you told us, securely synced to the cloud. It is not a score and it is not
           an assessment of you.
         </p>
       </header>
 
-      {state.checkIns.length === 0 ? (
+      {/* 🔥 Check length of Firebase data */}
+      {firebaseCheckIns.length === 0 ? (
         <EmptyState
           icon="🌤️"
           title="No check-ins yet"
           body="Once you have checked in a few times, your own pattern shows up here — and only here."
           action={
-            <LinkButton href="/student/home" tone="primary">
-              Check in today
+            <LinkButton href="/student/journal" tone="primary">
+              Write an entry today
             </LinkButton>
           }
         />
@@ -76,9 +123,10 @@ export default function MoodTrendsPage() {
           <section className="card p-4 sm:p-5">
             <SectionTitle
               title="Your mood pattern"
-              subtitle="Every dot is a check-in you made."
+              subtitle="Every dot is a cloud-synced check-in you made."
             />
-            <MoodTimeline checkIns={state.checkIns} />
+            {/* 🔥 Graph ko Firebase Data de diya */}
+            <MoodTimeline checkIns={firebaseCheckIns} />
           </section>
 
           <section className="card p-4 sm:p-5">
