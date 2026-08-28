@@ -47,7 +47,6 @@ export function LiveChat({
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
-<<<<<<< HEAD
 
     // Safety screening on the student side. Never blocks the message — it
     // offers support alongside it, matching the community composer.
@@ -56,9 +55,6 @@ export function LiveChat({
     }
 
     // Message bhejte time database me senderType save hoga
-=======
-    
->>>>>>> 6f3ad13cd85ba6df1e3b6832235305300ad5e578
     await addDoc(collection(db, "cases", chatId, "messages"), {
       text: newMessage,
       senderType: userType, 
@@ -147,7 +143,6 @@ export function LiveChat({
         <div ref={messagesEndRef} />
       </div>
 
-<<<<<<< HEAD
       {/* CRISIS SUPPORT OFFER — message still sent, nothing blocked */}
       {crisisPrompt ? (
         <div className="border-t border-amber-200 bg-amber-50 px-4 py-3">
@@ -176,8 +171,6 @@ export function LiveChat({
       ) : null}
 
       {/* INPUT AREA */}
-=======
->>>>>>> 6f3ad13cd85ba6df1e3b6832235305300ad5e578
       <form onSubmit={sendMessage} className="p-3 bg-white border-t border-navy-100 flex gap-2">
         <input
           value={newMessage}

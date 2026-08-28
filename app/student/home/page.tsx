@@ -17,6 +17,21 @@ import { recommendResources } from "@/lib/resources";
 import { useStore } from "@/lib/store";
 import { shouldPromptStudent } from "@/lib/support-indicator";
 
+/** Shape of a document in the Firestore `cases` collection. */
+type CaseDoc = {
+  id: string;
+  caseId?: string;
+  /** hidden owner key used to filter a student's own cases */
+  ownerId?: string;
+  studentHandle?: string;
+  concern?: string;
+  mode?: string;
+  note?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 
 function greetingFor(date: Date): string {
   const h = date.getHours();
@@ -70,7 +85,12 @@ export default function StudentHomePage() {
     const q = query(collection(db, "cases"), orderBy("updatedAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       
-      const allCases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // doc.data() is untyped DocumentData — annotate what a case document
+      // actually holds, otherwise only `id` is visible to TypeScript.
+      const allCases: CaseDoc[] = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<CaseDoc, "id">),
+      }));
       
       // 🔥 YAHAN HAI FIX: Sab cases me se sirf apne account (myHandle) wale filter karo
       // 🔥 YAHAN HAI FIX: Ab hum hidden 'ownerId' se filter kar rahe hain
@@ -169,7 +189,7 @@ export default function StudentHomePage() {
                   <Button tone="primary" size="sm" onClick={() => setActiveChatCase(c)}>
                     Open Chat 💬
                   </Button>
-                  <Button tone="neutral" size="sm" onClick={() => handleWithdraw(c.id)}>
+                  <Button tone="secondary" size="sm" onClick={() => handleWithdraw(c.id)}>
                     Withdraw ✕
                   </Button>
                 </div>
