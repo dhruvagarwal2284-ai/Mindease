@@ -279,6 +279,7 @@ import { useState } from "react";
 import { LandingFooter, LandingHeader } from "@/components/landing";
 import { Badge, Button, Callout, Field, Input } from "@/components/ui";
 import { uid } from "@/lib/format";
+import { generateIdentity } from "@/lib/privacy";
 import { useStore } from "@/lib/store";
 
 export default function RegisterAsPeerPage() {
@@ -303,9 +304,12 @@ export default function RegisterAsPeerPage() {
       return;
     }
 
-    // Save identity & activate supporting mode
+    // Save identity & activate supporting mode.
+    // state.identity is null until onboarding completes, so fall back to a
+    // freshly generated one rather than spreading null and losing caseId.
+    const base = state.identity ?? generateIdentity();
     setIdentity({
-      ...state.identity,
+      ...base,
       handle: alias.trim(),
     });
     setSupportMode("supporting");
@@ -319,7 +323,7 @@ export default function RegisterAsPeerPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-navy-900 font-sans selection:bg-teal-100 selection:text-teal-900">
-      <LandingHeader microTagline="Become a Peer Supporter." />
+      <LandingHeader />
 
       <main id="main" className="flex-1 w-full bg-gray-50 py-12 sm:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">

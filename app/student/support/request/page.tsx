@@ -66,7 +66,7 @@ export default function RequestCounsellingPage() {
       // Firebase rejects the entire request if even one value is 'undefined'
       const caseData = {
         caseId: newCaseId,
-        studentHandle: scope.pseudonym && state.identity?.handle ? state.identity.handle : "Anonymous", // Fallback added
+        studentHandle: scope.contactHandle && state.identity?.handle ? state.identity.handle : "Anonymous",
         concern: note ? note.slice(0, 50) + "..." : "General support", // Gives counsellor a hint
         mode: mode,
         note: note || "", // Converts undefined/null to empty string

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { screenContent } from "@/lib/moderation";
 import { Button } from "@/components/ui";
 
 // 🔥 Update interface to include senderType
@@ -28,6 +29,8 @@ export function LiveChat({
   const [newMessage, setNewMessage] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  // Shown when safety screening matches crisis language in an outgoing message.
+  const [crisisPrompt, setCrisisPrompt] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 1. FETCH MESSAGES REAL-TIME
@@ -51,7 +54,13 @@ export function LiveChat({
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault(); // 🔥 Form submit page reload roki
     if (!newMessage.trim()) return;
-    
+
+    // Safety screening on the student side. Never blocks the message — it
+    // offers support alongside it, matching the community composer.
+    if (userType === "student" && screenContent(newMessage).crisis) {
+      setCrisisPrompt(true);
+    }
+
     // Message bhejte time database me senderType save hoga
     await addDoc(collection(db, "cases", chatId, "messages"), {
       text: newMessage,
@@ -148,6 +157,33 @@ export function LiveChat({
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* CRISIS SUPPORT OFFER — message still sent, nothing blocked */}
+      {crisisPrompt ? (
+        <div className="border-t border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-900">
+            That sounded heavy. Support is here if you want it.
+          </p>
+          <p className="mt-0.5 text-xs text-amber-900/80">
+            Your message was sent as normal. This is only an offer.
+          </p>
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            <a
+              href="/student/help"
+              className="inline-flex min-h-9 items-center rounded-lg border border-urgent-200 bg-urgent-50 px-3 text-xs font-semibold text-urgent-900 hover:bg-urgent-100"
+            >
+              🆘 Get help now
+            </a>
+            <button
+              type="button"
+              onClick={() => setCrisisPrompt(false)}
+              className="ml-auto text-xs font-medium text-navy-500 hover:text-navy-800"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* INPUT AREA */}
       <form onSubmit={sendMessage} className="p-3 bg-white border-t border-navy-100 flex gap-2">

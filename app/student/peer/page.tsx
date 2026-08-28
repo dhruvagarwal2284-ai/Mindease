@@ -692,6 +692,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge, Button } from "@/components/ui";
 import { cx, formatTime, relativeTime, uid } from "@/lib/format";
+import { screenContent } from "@/lib/moderation";
 import { useStore } from "@/lib/store";
 import type { PeerP2PSignal, PeerQueueItem, SupportRoleMode } from "@/lib/types";
 
@@ -739,6 +740,8 @@ export default function PeerChatPage() {
 
   // 🚀 ONLY STATE NEEDED FOR RIGHT PANEL NOW
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
+  // Shown when safety screening matches crisis language in an outgoing message.
+  const [crisisPrompt, setCrisisPrompt] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -890,6 +893,10 @@ export default function PeerChatPage() {
     if (e) e.preventDefault();
     const text = draft.trim();
     if (!text || !matchId) return;
+
+    // Safety screening. A crisis match never blocks the message — it surfaces
+    // support alongside it, the same way the community composer does.
+    if (screenContent(text).crisis) setCrisisPrompt(true);
 
     setDraft("");
     const newMsg: ChatMessage = {
@@ -1128,6 +1135,39 @@ export default function PeerChatPage() {
                 <span>🔒 <strong>Private &amp; Ephemeral:</strong> Zero messages are saved. Once you leave, the chat is permanently gone.</span>
                 <Link href="/student/help" className="font-medium text-urgent-700 hover:underline shrink-0 ml-2">Crisis helpline →</Link>
               </div>
+
+              {crisisPrompt ? (
+                <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 animate-fade-up">
+                  <p className="text-sm font-semibold text-amber-900">
+                    That sounded heavy. Support is here if you want it.
+                  </p>
+                  <p className="mt-0.5 text-xs text-amber-900/80">
+                    Your message was sent as normal — nothing was blocked and nobody was
+                    told. This is only an offer.
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <Link
+                      href="/student/help"
+                      className="inline-flex min-h-9 items-center rounded-lg border border-urgent-200 bg-urgent-50 px-3 text-xs font-semibold text-urgent-900 hover:bg-urgent-100"
+                    >
+                      🆘 Get help now
+                    </Link>
+                    <Link
+                      href="/student/support/request"
+                      className="inline-flex min-h-9 items-center rounded-lg border border-teal-200 bg-teal-50 px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100"
+                    >
+                      🤝 Talk to a counsellor
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setCrisisPrompt(false)}
+                      className="ml-auto text-xs font-medium text-navy-500 hover:text-navy-800"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               <div ref={scrollRef} className="flex flex-col space-y-3 overflow-y-auto p-4 sm:p-5 min-h-[300px] max-h-[50vh]">
                 {messages.length === 0 && (

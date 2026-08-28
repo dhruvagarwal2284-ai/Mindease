@@ -257,7 +257,9 @@ type StudentTab = {
 };
 
 function getStudentTabs(supportMode: string): StudentTab[] {
-  const tabs = [
+  // Annotate the array — without this TypeScript infers its shape from the
+  // first three entries and rejects the `urgent` flag added further down.
+  const tabs: StudentTab[] = [
     { href: "/student/home", label: "Home", icon: "🏠" },
     { href: "/student/community", label: "Community", icon: "💬" },
     { href: "/student/journal", label: "Journal", icon: "📓" },
