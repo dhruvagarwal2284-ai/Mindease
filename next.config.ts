@@ -11,7 +11,7 @@ try {
 
   const uploads = [
     {
-      src: "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787856684334.jpg",
+      src: "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787917028392.jpg",
       dest: path.join(destDir, "hero-campus.jpg"),
     },
     {

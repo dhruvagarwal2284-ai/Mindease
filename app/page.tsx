@@ -24,7 +24,7 @@ export default function LandingPage() {
           alt="Campus Sunrise Pathway"
           fill
           priority
-          quality={100}
+          unoptimized
           className="object-cover object-center md:object-[center_right]"
           sizes="100vw"
         />
