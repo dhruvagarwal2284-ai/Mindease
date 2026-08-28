@@ -1,567 +1,313 @@
 "use client";
 
+import { ThemeSelector } from "@/components/ThemeSelector";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { ReauthDialog } from "@/components/privacy";
+import { useMemo } from "react";
+import { DailyCheckIn } from "@/components/checkin";
+import { AnonymousModeBar } from "@/components/privacy";
+import {
+  AiUnavailable,
+  StudentSupportPrompt,
+} from "@/components/support";
 import {
   Badge,
-  Button,
-  Callout,
-  Chip,
-  EmptyState,
-  Input,
   LinkButton,
-  SectionTitle,
   SkeletonCard,
 } from "@/components/ui";
-import { cx, daysAgo, formatDateTime, isoDay } from "@/lib/format";
-import { scopeSummary, withheldSummary } from "@/lib/privacy";
-import { recommendResources, RESOURCES, resourceById } from "@/lib/resources";
+import { cx, isoDay } from "@/lib/format";
+import { recommendResources } from "@/lib/resources";
 import { useStore } from "@/lib/store";
-import type { CaseStatus, CounsellingCase } from "@/lib/types";
+import { shouldPromptStudent } from "@/lib/support-indicator";
 
-const STATUS_COPY: Record<CaseStatus, { label: string; tone: "info" | "amber" | "mint" | "neutral" }> = {
-  requested: { label: "Waiting for a counsellor", tone: "info" },
-  awaiting_student: { label: "They have replied — over to you", tone: "amber" },
-  active: { label: "Active", tone: "mint" },
-  scheduled: { label: "Appointment booked", tone: "mint" },
-  closed: { label: "Closed", tone: "neutral" },
-};
+/* --------------------------------------------------------------- greeting */
 
-function CaseCard({ kase }: { kase: CounsellingCase }) {
-  const { state, linkIdentity, withdrawCase, toast } = useStore();
-  const [reauth, setReauth] = useState(false);
-  const shared = scopeSummary(kase.sharedScope);
-  const withheld = withheldSummary(kase.sharedScope);
-  const status = STATUS_COPY[kase.status];
+function greetingFor(date: Date): string {
+  const h = date.getHours();
+
+  if (h < 5) return "You're up late";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 22) return "Good evening";
+
+  return "Winding down";
+}
+
+/* ---------------------------------------------------------- quick actions */
+
+const QUICK_ACTIONS: {
+  href: string;
+  label: string;
+  body: string;
+  icon: string;
+  className: string;
+}[] = [
+  {
+    href: "/student/journal/new",
+    label: "Write privately",
+    body: "A page only you can read. Nothing leaves this device.",
+    icon: "📓",
+    className:
+      "border-info-200 bg-info-50 text-info-900 hover:border-info-300 hover:bg-info-100/70",
+  },
+  {
+    href: "/student/support/request",
+    label: "Book a counsellor",
+    body: "Schedule a formal appointment with campus counselling.",
+    icon: "🤝",
+    className:
+      "border-pro-200 bg-pro-50 text-pro-900 hover:border-pro-300 hover:bg-pro-100/70",
+  },
+];
+
+/* ------------------------------------------------------------------- page */
+
+export default function StudentHomePage() {
+  const {
+    ready,
+    state,
+    indicator,
+    dismissSupportPrompt,
+  } = useStore();
+
+  const recentTags = useMemo(() => {
+    const recent = [...state.checkIns]
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
+      .slice(0, 5);
+
+    return Array.from(
+      new Set(recent.flatMap((c) => c.tags as string[])),
+    );
+  }, [state.checkIns]);
+
+  const recommended = useMemo(
+    () => recommendResources(recentTags, 3),
+    [recentTags],
+  );
+
+  // Get active cases for the student to track
+  const myCases = useMemo(() => {
+    return (state.cases || []).filter(c => c.status !== 'closed');
+  }, [state.cases]);
+
+  if (!ready) {
+    return (
+      <div className="space-y-3">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    );
+  }
+
+  const analysisOn = state.consent.aiSupportAnalysis;
+  const promptDismissedToday = state.dismissedPromptOn === isoDay();
+
+  const showPrompt =
+    analysisOn &&
+    !state.simulate.aiDown &&
+    shouldPromptStudent(indicator) &&
+    !promptDismissedToday;
+
+  const showAiDown = analysisOn && state.simulate.aiDown;
 
   return (
-    <article className="card p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h3 className="font-semibold text-navy-900">{kase.concern}</h3>
-          <p className="muted mt-0.5 text-xs">
-            {kase.mode} · requested {formatDateTime(kase.createdAt)} · case{" "}
-            <span className="font-mono">{kase.caseId}</span>
-          </p>
-        </div>
-        <Badge tone={status.tone}>{status.label}</Badge>
+    <div className="space-y-5 pb-0">
+
+      {/* ------------------------------------------------------ theme */}
+      <ThemeSelector />
+
+      {/* ------------------------------------------------------- greeting */}
+      <header className="animate-fade-up">
+        <p className="muted text-sm">
+          {greetingFor(new Date())},
+        </p>
+
+        <h1 className="text-2xl font-semibold tracking-tight text-navy-900">
+          {state.identity?.handle ?? "MindMate"}
+        </h1>
+
+        <p className="muted mt-1 text-sm">
+          What support could you use right now? Nothing here is compulsory.
+        </p>
+
+        <AnonymousModeBar className="mt-3" />
+      </header>
+
+      {/* ------------------------------------------------------- check-in */}
+      <DailyCheckIn />
+
+      {/* -------------------------------------------------- support offer */}
+      <div aria-live="polite">
+        {showAiDown ? <AiUnavailable /> : null}
+
+        {showPrompt ? (
+          <StudentSupportPrompt
+            indicator={indicator}
+            onDismiss={dismissSupportPrompt}
+            className="animate-fade-up"
+          />
+        ) : null}
       </div>
 
-      {kase.status === "awaiting_student" ? (
-        <Callout tone="amber" icon="🤝" title="A counsellor has offered to talk" className="mt-3">
-          <p>
-            They cannot see who you are. If you would like them to be able to reply to you
-            directly, you can attach your pseudonym — and if you would rather not, ignoring
-            this has no consequence at all. Nobody is told either way.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              tone="primary"
-              onClick={() => {
-                linkIdentity(kase.id);
-                toast("Pseudonym attached", "success", "Still no name, email or roll number.");
-              }}
-            >
-              Accept — attach my pseudonym
-            </Button>
-            <Button size="sm" tone="ghost">
-              Not right now
-            </Button>
-          </div>
-        </Callout>
-      ) : null}
+      {/* -------------------------------------------------- quick actions */}
+      <section aria-labelledby="quick-actions-heading">
+        <h2
+          id="quick-actions-heading"
+          className="mb-3 text-lg font-semibold tracking-tight text-navy-900"
+        >
+          What would help right now?
+        </h2>
 
-      {kase.offeredResourceIds.length ? (
-        <div className="mt-3 rounded-xl border border-mint-200 bg-mint-50/60 p-3">
-          <p className="text-sm font-medium text-mint-900">
-            A counsellor shared {kase.offeredResourceIds.length === 1 ? "a resource" : "resources"} with you
-          </p>
-          <ul className="mt-1.5 space-y-1">
-            {kase.offeredResourceIds.map((rid) => {
-              const r = resourceById(rid, state.customResources);
-              return r ? (
-                <li key={rid} className="text-sm text-navy-800">
-                  <Link
-                    href={`/student/support/resources/${r.id}`}
-                    className="font-medium text-teal-800 hover:underline"
-                  >
-                    {r.title}
-                  </Link>{" "}
-                  <span className="muted">· {r.minutes} min</span>
-                </li>
-              ) : null;
-            })}
-          </ul>
-        </div>
-      ) : null}
+        <ul className="grid grid-cols-2 gap-3">
+          {QUICK_ACTIONS.map((a) => (
+            <li key={a.href}>
+              <Link
+                href={a.href}
+                className={cx(
+                  "flex h-full min-h-[7.5rem] flex-col justify-between rounded-2xl border p-4 transition-colors",
+                  a.className,
+                )}
+              >
+                <span
+                  className="text-2xl leading-none"
+                  aria-hidden
+                >
+                  {a.icon}
+                </span>
 
-      <div className="mt-4 rounded-xl border border-navy-100 bg-navy-50/60 p-3.5">
-        <p className="text-sm font-semibold text-navy-900">
-          What this counsellor can see
-        </p>
-        <ul className="mt-2 space-y-1">
-          {shared.map((s) => (
-            <li key={s} className="flex gap-2 text-sm text-navy-800">
-              <span className="text-mint-600" aria-hidden>
-                ✓
-              </span>
-              {s}
+                <span className="mt-3 block">
+                  <span className="block font-semibold">
+                    {a.label}
+                  </span>
+
+                  <span className="mt-0.5 block text-xs opacity-80">
+                    {a.body}
+                  </span>
+                </span>
+              </Link>
             </li>
           ))}
         </ul>
-        {withheld.length ? (
-          <>
-            <p className="mt-3 text-sm font-semibold text-navy-900">
-              What they cannot
-            </p>
-            <ul className="mt-2 space-y-1">
-              {withheld.map((s) => (
-                <li key={s} className="flex gap-2 text-sm text-navy-500">
-                  <span aria-hidden>✕</span>
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : null}
-        <p className="muted mt-3 text-xs">
-          …and nothing else. Your name, email, roll number and journal are not attached to
-          this case.
-        </p>
-      </div>
+      </section>
 
-      {kase.status !== "closed" ? (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Link
-            href="/student/support/appointments"
-            className="text-sm font-medium text-teal-800 hover:underline"
+      {/* -------------------------------------------------- active tracking widget 🔥 */}
+      {myCases.length > 0 && (
+        <section aria-labelledby="tracking-heading" className="animate-fade-up">
+          <h2
+            id="tracking-heading"
+            className="mb-3 text-lg font-semibold tracking-tight text-navy-900 flex items-center gap-2"
           >
-            View appointments →
-          </Link>
-          <Button size="sm" tone="ghost" className="ml-auto" onClick={() => setReauth(true)}>
-            Withdraw this request
-          </Button>
-        </div>
-      ) : null}
-
-      <ReauthDialog
-        open={reauth}
-        onClose={() => setReauth(false)}
-        action="withdrawing your support request and detaching everything you shared"
-        onVerified={() => {
-          withdrawCase(kase.id);
-          setReauth(false);
-          toast("Request withdrawn", "info", "Everything you shared is detached.");
-        }}
-      />
-    </article>
-  );
-}
-
-// export default function SupportHubPage() {
-//   const { ready, state } = useStore();
-//   const [category, setCategory] = useState<string>("All");
-//   const [query, setQuery] = useState("");
-
-//   const customResources = state.customResources ?? [];
-//   const allResources = useMemo(
-//     () => [...customResources, ...RESOURCES],
-//     [customResources],
-//   );
-
-//   const recentTags = useMemo(() => {
-//     const cutoff = isoDay(daysAgo(21));
-//     const set = new Set<string>();
-//     for (const c of state.checkIns) {
-//       if (c.date >= cutoff) for (const t of c.tags) set.add(t);
-//     }
-//     return [...set];
-//   }, [state.checkIns]);
-
-//   const suggested = useMemo(
-//     () =>
-//       state.consent.aiSupportAnalysis
-//         ? recommendResources(recentTags, 3, customResources).map((r) => r.id)
-//         : [],
-//     [recentTags, state.consent.aiSupportAnalysis, customResources],
-//   );
-
-//   if (!ready) return <SkeletonCard />;
-
-//   const categories = ["All", ...new Set(allResources.map((r) => r.category))];
-//   const filtered = allResources.filter((r) => {
-//     const inCat = category === "All" || r.category === category;
-//     const q = query.trim().toLowerCase();
-//     const inQuery =
-//       !q || r.title.toLowerCase().includes(q) || r.summary.toLowerCase().includes(q);
-//     return inCat && inQuery;
-//   });
-
-//   const myCases = state.cases.filter((c) => c.isDemoStudent);
-
-//   return (
-//     <div className="space-y-6">
-//       <header>
-//         <h1 className="text-2xl font-semibold tracking-tight text-navy-900">Support</h1>
-//         <p className="muted mt-1 text-sm">
-//           Things to read on your own, and a way to talk to a person when you want one.
-//         </p>
-//       </header>
-
-//       <section className="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5">
-//         <p className="text-2xl" aria-hidden>
-//           🤝
-//         </p>
-//         <h2 className="mt-2 text-lg font-semibold text-navy-900">
-//           Would you like to talk to a counsellor?
-//         </h2>
-//         <p className="mt-1 text-sm text-navy-700">
-//           You choose what they see, one item at a time, before anything is sent. You can
-//           withdraw at any point.
-//         </p>
-//         <div className="mt-4 flex flex-wrap gap-2">
-//           <LinkButton href="/student/peer" tone="primary">
-//             Talk to a peer now
-//           </LinkButton>
-//           <LinkButton href="/student/support/request">
-//             Book a counsellor
-//           </LinkButton>
-//           <LinkButton href="/student/support/appointments">My appointments</LinkButton>
-//         </div>
-//       </section>
-
-//       {/* ------------------------------------------------------ my support */}
-//       <section aria-labelledby="my-support">
-//         <SectionTitle
-//           title={<span id="my-support">My support</span>}
-//           subtitle="Requests you have made, and exactly what each one shares."
-//         />
-//         {myCases.length === 0 ? (
-//           <EmptyState
-//             icon="🌱"
-//             title="You haven't asked for anything yet"
-//             body="Asking is optional, reversible, and does not go on any record. If it would help, it is here."
-//           />
-//         ) : (
-//           <div className="space-y-3">
-//             {myCases.map((c) => (
-//               <CaseCard key={c.id} kase={c} />
-//             ))}
-//           </div>
-//         )}
-//       </section>
-
-//       {/* -------------------------------------------------------- resources */}
-//       <section aria-labelledby="resources">
-//         <SectionTitle
-//           title={<span id="resources">Find resources</span>}
-//           subtitle="Short and practical. No sign-up, no tracking of what you opened. Click any resource to read the full article."
-//         />
-
-//         <div className="space-y-3">
-//           <Input
-//             value={query}
-//             onChange={(e) => setQuery(e.target.value)}
-//             placeholder="Search resources"
-//             aria-label="Search resources"
-//             type="search"
-//           />
-//           <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-//             {categories.map((c) => (
-//               <Chip key={c} selected={category === c} onClick={() => setCategory(c)}>
-//                 {c}
-//               </Chip>
-//             ))}
-//           </div>
-//         </div>
-
-//         {filtered.length === 0 ? (
-//           <EmptyState
-//             className="mt-4"
-//             icon="🔍"
-//             title="Nothing matches that"
-//             body="Try a different word, or clear the filters to see everything."
-//           />
-//         ) : (
-//           <div className="mt-4 space-y-2.5">
-//             {filtered.map((r) => {
-//               const isSuggested = suggested.includes(r.id);
-//               const isCustom = customResources.some((c) => c.id === r.id);
-//               return (
-//                 <Link
-//                   key={r.id}
-//                   href={`/student/support/resources/${r.id}`}
-//                   className={cx(
-//                     "block rounded-2xl border p-4 transition-all hover:border-teal-300 hover:shadow-sm",
-//                     isSuggested
-//                       ? "border-mint-200 bg-mint-50/50"
-//                       : isCustom
-//                         ? "border-pro-200 bg-pro-50/30"
-//                         : "border-navy-100 bg-white",
-//                   )}
-//                 >
-//                   <div className="flex flex-wrap items-start justify-between gap-2">
-//                     <h3 className="font-medium text-navy-900 group-hover:text-teal-900">
-//                       {r.title}
-//                     </h3>
-//                     <div className="flex items-center gap-1.5">
-//                       {isCustom ? (
-//                         <Badge tone="pro">From counselling team</Badge>
-//                       ) : null}
-//                       {isSuggested ? (
-//                         <Badge tone="mint">Suggested for you</Badge>
-//                       ) : (
-//                         <Badge tone="neutral">{r.minutes} min read</Badge>
-//                       )}
-//                     </div>
-//                   </div>
-//                   <p className="muted mt-0.5 text-xs">
-//                     {r.category} · {r.minutes} min read
-//                   </p>
-//                   <p className="mt-2 text-sm text-navy-700 leading-relaxed">{r.summary}</p>
-//                   <p className="mt-3 text-xs font-semibold text-teal-800 flex items-center gap-1">
-//                     Read article <span aria-hidden>→</span>
-//                   </p>
-//                 </Link>
-//               );
-//             })}
-//           </div>
-//         )}
-
-//         {state.consent.aiSupportAnalysis ? (
-//           <p className="muted mt-3 text-xs">
-//             Suggestions come from the topics you tapped in your own check-ins on this
-//             device. Turn that off in{" "}
-//             <Link
-//               href="/student/settings"
-//               className="font-medium text-teal-800 underline underline-offset-2"
-//             >
-//               Settings
-//             </Link>{" "}
-//             and this section becomes a plain list.
-//           </p>
-//         ) : (
-//           <p className="muted mt-3 text-xs">
-//             Personalised suggestions are off, so this is simply the full library.
-//           </p>
-//         )}
-//       </section>
-//     </div>
-//   );
-// }
-
-export default function SupportHubPage() {
-  const { ready, state } = useStore();
-  const [category, setCategory] = useState<string>("All");
-  const [query, setQuery] = useState("");
-  
-  // 🔥 NAYA STATE VIEW MORE KE LIYE
-  const [visibleCount, setVisibleCount] = useState(3);
-
-  const customResources = state.customResources ?? [];
-  const allResources = useMemo(
-    () => [...customResources, ...RESOURCES],
-    [customResources],
-  );
-
-  const recentTags = useMemo(() => {
-    const cutoff = isoDay(daysAgo(21));
-    const set = new Set<string>();
-    for (const c of state.checkIns) {
-      if (c.date >= cutoff) for (const t of c.tags) set.add(t);
-    }
-    return [...set];
-  }, [state.checkIns]);
-
-  const suggested = useMemo(
-    () =>
-      state.consent.aiSupportAnalysis
-        ? recommendResources(recentTags, 3, customResources).map((r) => r.id)
-        : [],
-    [recentTags, state.consent.aiSupportAnalysis, customResources],
-  );
-
-  if (!ready) return <SkeletonCard />;
-
-  const categories = ["All", ...new Set(allResources.map((r) => r.category))];
-  const filtered = allResources.filter((r) => {
-    const inCat = category === "All" || r.category === category;
-    const q = query.trim().toLowerCase();
-    const inQuery =
-      !q || r.title.toLowerCase().includes(q) || r.summary.toLowerCase().includes(q);
-    return inCat && inQuery;
-  });
-
-  const myCases = state.cases.filter((c) => c.isDemoStudent);
-  
-  // 🔥 SIRF UTNE CASES DIKHAYENGE JITNA VISIBLE COUNT HAI
-  const visibleCases = myCases.slice(0, visibleCount);
-  const hasMoreCases = myCases.length > visibleCount;
-
-  return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-navy-900">Support</h1>
-        <p className="muted mt-1 text-sm">
-          Things to read on your own, and a way to talk to a person when you want one.
-        </p>
-      </header>
-
-      <section className="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5">
-        <p className="text-2xl" aria-hidden>
-          🤝
-        </p>
-        <h2 className="mt-2 text-lg font-semibold text-navy-900">
-          Would you like to talk to a counsellor?
-        </h2>
-        <p className="mt-1 text-sm text-navy-700">
-          You choose what they see, one item at a time, before anything is sent. You can
-          withdraw at any point.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <LinkButton href="/student/peer" tone="primary">
-            Talk to a peer now
-          </LinkButton>
-          <LinkButton href="/student/support/request">
-            Book a counsellor
-          </LinkButton>
-          <LinkButton href="/student/support/appointments">My appointments</LinkButton>
-        </div>
-      </section>
-
-      {/* ------------------------------------------------------ my support */}
-      <section aria-labelledby="my-support">
-        <SectionTitle
-          title={<span id="my-support">My support</span>}
-          subtitle="Requests you have made, and exactly what each one shares."
-        />
-        {myCases.length === 0 ? (
-          <EmptyState
-            icon="🌱"
-            title="You haven't asked for anything yet"
-            body="Asking is optional, reversible, and does not go on any record. If it would help, it is here."
-          />
-        ) : (
+            📋 Track your requests
+          </h2>
           <div className="space-y-3">
-            {/* 🔥 UPDATED TO MAP ONLY VISIBLE CASES */}
-            {visibleCases.map((c) => (
-              <CaseCard key={c.id} kase={c} />
-            ))}
-            
-            {/* 🔥 VIEW MORE BUTTON */}
-            {hasMoreCases && (
-              <div className="flex justify-center pt-2">
-                <Button 
-                  tone="secondary" 
-                  size="sm" 
-                  onClick={() => setVisibleCount((prev) => prev + 3)}
-                  className="w-full sm:w-auto"
-                >
-                  View more past requests ↴
-                </Button>
+            {myCases.map((c) => (
+              <div key={c.id} className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-amber-200/50 bg-amber-50/30">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-navy-900">{c.caseId}</span>
+                    <Badge tone={c.status === 'requested' ? 'amber' : c.status === 'scheduled' ? 'teal' : 'pro'}>
+                      {c.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-navy-700 font-medium">
+                    Requested {c.mode.toLowerCase()} support for {c.concern.toLowerCase()}
+                  </p>
+                  <p className="text-xs text-navy-500 mt-1">
+                    Last updated: {new Date(c.updatedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <LinkButton href="/student/support" tone="secondary" size="sm">
+                    View Details
+                  </LinkButton>
+                </div>
               </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* -------------------------------------------------------- resources */}
-      <section aria-labelledby="resources">
-        <SectionTitle
-          title={<span id="resources">Find resources</span>}
-          subtitle="Short and practical. No sign-up, no tracking of what you opened. Click any resource to read the full article."
-        />
-
-        <div className="space-y-3">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search resources"
-            aria-label="Search resources"
-            type="search"
-          />
-          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-            {categories.map((c) => (
-              <Chip key={c} selected={category === c} onClick={() => setCategory(c)}>
-                {c}
-              </Chip>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ----------------------------------------------------- recommended */}
+      <section aria-labelledby="recommended-heading">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2
+              id="recommended-heading"
+              className="text-lg font-semibold tracking-tight text-navy-900"
+            >
+              {analysisOn
+                ? "Recommended for you"
+                : "Reading that might help"}
+            </h2>
+
+            <p className="muted mt-0.5 text-sm">
+              {analysisOn
+                ? recentTags.length
+                  ? `Picked from the topics you tapped recently: ${recentTags
+                      .slice(0, 3)
+                      .join(", ")}.`
+                  : "A place to start until you tell us more."
+                : "Support analysis is off, so this is just the general shelf."}
+            </p>
           </div>
         </div>
 
-        {filtered.length === 0 ? (
-          <EmptyState
-            className="mt-4"
-            icon="🔍"
-            title="Nothing matches that"
-            body="Try a different word, or clear the filters to see everything."
-          />
-        ) : (
-          <div className="mt-4 space-y-2.5">
-            {filtered.map((r) => {
-              const isSuggested = suggested.includes(r.id);
-              const isCustom = customResources.some((c) => c.id === r.id);
-              return (
+        {analysisOn ? (
+          <ul className="space-y-2.5">
+            {recommended.map((r) => (
+              <li key={r.id}>
                 <Link
-                  key={r.id}
-                  href={`/student/support/resources/${r.id}`}
-                  className={cx(
-                    "block rounded-2xl border p-4 transition-all hover:border-teal-300 hover:shadow-sm",
-                    isSuggested
-                      ? "border-mint-200 bg-mint-50/50"
-                      : isCustom
-                        ? "border-pro-200 bg-pro-50/30"
-                        : "border-navy-100 bg-white",
-                  )}
+                  href="/student/support"
+                  className="card flex min-h-11 items-start gap-3 p-4 transition-colors hover:border-teal-200 hover:bg-teal-50/40"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <h3 className="font-medium text-navy-900 group-hover:text-teal-900">
+                  <span
+                    className="text-xl leading-none"
+                    aria-hidden
+                  >
+                    📄
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-navy-900">
                       {r.title}
-                    </h3>
-                    <div className="flex items-center gap-1.5">
-                      {isCustom ? (
-                        <Badge tone="pro">From counselling team</Badge>
-                      ) : null}
-                      {isSuggested ? (
-                        <Badge tone="mint">Suggested for you</Badge>
-                      ) : (
-                        <Badge tone="neutral">{r.minutes} min read</Badge>
-                      )}
-                    </div>
-                  </div>
-                  <p className="muted mt-0.5 text-xs">
-                    {r.category} · {r.minutes} min read
-                  </p>
-                  <p className="mt-2 text-sm text-navy-700 leading-relaxed">{r.summary}</p>
-                  <p className="mt-3 text-xs font-semibold text-teal-800 flex items-center gap-1">
-                    Read article <span aria-hidden>→</span>
-                  </p>
+                    </span>
+
+                    <span className="muted mt-0.5 block text-sm">
+                      {r.summary}
+                    </span>
+
+                    <span className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <Badge tone="teal">
+                        {r.category}
+                      </Badge>
+
+                      <span className="muted text-xs">
+                        {r.minutes} min read
+                      </span>
+                    </span>
+                  </span>
                 </Link>
-              );
-            })}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="card p-4">
+            <p className="text-sm text-navy-700">
+              MindEase is not looking at your check-ins, so nothing
+              is picked out for you. The full library is still open
+              to browse whenever you want it.
+            </p>
+
+            <LinkButton
+              href="/student/support"
+              className="mt-3"
+            >
+              Browse resources
+            </LinkButton>
           </div>
         )}
-
-        {state.consent.aiSupportAnalysis ? (
-          <p className="muted mt-3 text-xs">
-            Suggestions come from the topics you tapped in your own check-ins on this
-            device. Turn that off in{" "}
-            <Link
-              href="/student/settings"
-              className="font-medium text-teal-800 underline underline-offset-2"
-            >
-              Settings
-            </Link>{" "}
-            and this section becomes a plain list.
-          </p>
-        ) : (
-          <p className="muted mt-3 text-xs">
-            Personalised suggestions are off, so this is simply the full library.
-          </p>
-        )}
       </section>
+
     </div>
   );
 }

@@ -76,6 +76,8 @@ interface StoreValue {
   regenerateIdentity: () => AnonymousIdentity;
   // 🔥 FIX: setIdentity yahan define kar diya
   setIdentity: (identity: AnonymousIdentity) => void;
+  savedAccounts:{handle:string; pin:string}[];
+  savedAccountLocal:(handle:string, pin:string)=>void;
   setConsent: (key: ConsentKey, value: boolean) => void;
   setA11y: (key: keyof A11ySettings, value: boolean) => void;
   setSupportMode: (mode: SupportRoleMode) => void;
@@ -204,6 +206,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [locked, setLocked] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [savedAccounts, setSavedAccounts] = useState<{handle: string, pin: string}[]>([]);
   const lastActivity = useRef(Date.now());
 
   /* ------------------------------------------------------------- hydrate */
@@ -212,6 +215,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setState(migrate(JSON.parse(raw)));
+      const rawAccounts = window.localStorage.getItem("mindease.accounts");
+      if (rawAccounts) setSavedAccounts(JSON.parse(rawAccounts));
     } catch {
       /* corrupt or unavailable storage — fall back to the empty state */
     }
@@ -402,18 +407,43 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   // 🔥 FIX: setIdentity ka actual function logic yahan likh diya
-  const setIdentity = useCallback((identity: AnonymousIdentity) => {
-    setState((p) => ({ ...p, identity }));
-  }, []);
+  // const setIdentity = useCallback((identity: AnonymousIdentity) => {
+  //   setState((p) => ({ ...p, identity }));
+  // }, []);
 
+  // const setSupportMode = useCallback((mode: SupportRoleMode) => {
+  //   setState((p) => ({ ...p, supportMode: mode }));
+  // }, []);
+
+  // const regenerateIdentity = useCallback(() => {
+  //   const identity = generateIdentity();
+  //   setState((p) => ({ ...p, identity }));
+  //   return identity;
+  // }, []);
+  // 🔥 FIX: setIdentity ka actual function logic yahan likh diya
   const setSupportMode = useCallback((mode: SupportRoleMode) => {
     setState((p) => ({ ...p, supportMode: mode }));
+  }, []);
+const setIdentity = useCallback((identity: AnonymousIdentity) => {
+    setState((p) => ({ ...p, identity }));
   }, []);
 
   const regenerateIdentity = useCallback(() => {
     const identity = generateIdentity();
     setState((p) => ({ ...p, identity }));
     return identity;
+  }, []);
+
+  // 👇 YEH PURA FUNCTION ADD KAR 👇
+  const saveAccountLocal = useCallback((handle: string, pin: string) => {
+    setSavedAccounts((prev) => {
+      // Check karenge ki account pehle se toh nahi hai
+      if (prev.some((acc) => acc.handle === handle)) return prev;
+      
+      const updated = [{ handle, pin }, ...prev]; // Naya account sabse aage
+      window.localStorage.setItem("mindease.accounts", JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   const setConsent = useCallback(
@@ -1242,10 +1272,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       lastActivity.current = Date.now();
       setLocked(false);
     },
+     // 🔥 FIX: setIdentity yahan expose kar diya
     completeOnboarding,
     regenerateIdentity,
     setIdentity, // 🔥 FIX: setIdentity yahan expose kar diya
-    setConsent,
+    
+    // 👇 YEH 2 LINES ADD KAR 👇
+    savedAccounts,
+    saveAccountLocal,
+     setConsent,
     setA11y,
     setSupportMode,
     saveCheckIn,

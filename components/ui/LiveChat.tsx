@@ -6,16 +6,14 @@ import { db } from "@/lib/firebase";
 import { screenContent } from "@/lib/moderation";
 import { Button } from "@/components/ui";
 
-// 🔥 Update interface to include senderType
 interface Message {
   id: string;
   text: string;
-  senderType: string; // This will store "student" or "counsellor"
+  senderType: string;
   createdAt: any;
   isEdited?: boolean;
 }
 
-// 🔥 ADDED userType to props! Default is "student" just in case.
 export function LiveChat({ 
   chatId, 
   onClose, 
@@ -33,27 +31,23 @@ export function LiveChat({
   const [crisisPrompt, setCrisisPrompt] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 1. FETCH MESSAGES REAL-TIME
   useEffect(() => {
     if (!chatId) return;
     const q = query(collection(db, "cases", chatId, "messages"), orderBy("createdAt", "asc"));
-    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Message[]);
     });
-    
     return () => unsubscribe();
   }, [chatId]);
 
-  // AUTO-SCROLL
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 2. SEND MESSAGE
   const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault(); // 🔥 Form submit page reload roki
+    e.preventDefault();
     if (!newMessage.trim()) return;
+<<<<<<< HEAD
 
     // Safety screening on the student side. Never blocks the message — it
     // offers support alongside it, matching the community composer.
@@ -62,6 +56,9 @@ export function LiveChat({
     }
 
     // Message bhejte time database me senderType save hoga
+=======
+    
+>>>>>>> 6f3ad13cd85ba6df1e3b6832235305300ad5e578
     await addDoc(collection(db, "cases", chatId, "messages"), {
       text: newMessage,
       senderType: userType, 
@@ -70,7 +67,6 @@ export function LiveChat({
     setNewMessage("");
   };
 
-  // 3. EDIT MESSAGE
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editText.trim() || !editingId) return;
@@ -82,7 +78,6 @@ export function LiveChat({
     setEditText("");
   };
 
-  // 4. DELETE MESSAGE
   const handleDelete = async (msgId: string) => {
     if (confirm("Are you sure you want to delete this message?")) {
       await deleteDoc(doc(db, "cases", chatId, "messages", msgId));
@@ -91,7 +86,6 @@ export function LiveChat({
 
   return (
     <div className="flex flex-col h-full w-full bg-white overflow-hidden">
-      {/* HEADER */}
       <div className="bg-teal-50 px-4 py-3 border-b border-teal-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span aria-hidden>💬</span>
@@ -106,16 +100,13 @@ export function LiveChat({
         )}
       </div>
 
-      {/* CHAT AREA */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
         {messages.length === 0 ? (
           <div className="text-center text-navy-400 text-sm mt-10 italic">Start the conversation...</div>
         ) : (
           messages.map((msg) => {
-            // 🔥 THE MAGIC: Compare message sender with current user
-            // Added fallbacks for old messages that might have used senderId or sender
-            const msgSender = msg.senderType || (msg as any).sender || (msg as any).senderId;
-            const isMe = msgSender === userType;
+            // 🔥 Exact comparison fix: checks if current logged in user type matches message senderType
+            const isMe = msg.senderType === userType;
             const isEditing = editingId === msg.id;
 
             return (
@@ -132,7 +123,6 @@ export function LiveChat({
                   </form>
                 ) : (
                   <div className="flex items-center gap-2 max-w-[80%]">
-                    {/* Delete & Edit Buttons (Only show for 'Me') */}
                     {isMe && (
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                         <button onClick={() => { setEditingId(msg.id); setEditText(msg.text); }} className="text-xs bg-white border border-navy-200 rounded p-1 hover:bg-navy-50" title="Edit">✏️</button>
@@ -140,8 +130,7 @@ export function LiveChat({
                       </div>
                     )}
                     
-                    {/* Chat Bubble */}
-                    <div className={`px-4 py-2 text-sm rounded-2xl relative shadow-sm ${
+                   <div className={`px-4 py-2 text-sm rounded-2xl relative shadow-sm max-w-[280px] sm:max-w-xs break-words whitespace-pre-wrap ${
                       isMe 
                         ? "bg-teal-600 text-white rounded-br-none" 
                         : "bg-white border border-navy-200 text-navy-900 rounded-bl-none"
@@ -158,6 +147,7 @@ export function LiveChat({
         <div ref={messagesEndRef} />
       </div>
 
+<<<<<<< HEAD
       {/* CRISIS SUPPORT OFFER — message still sent, nothing blocked */}
       {crisisPrompt ? (
         <div className="border-t border-amber-200 bg-amber-50 px-4 py-3">
@@ -186,6 +176,8 @@ export function LiveChat({
       ) : null}
 
       {/* INPUT AREA */}
+=======
+>>>>>>> 6f3ad13cd85ba6df1e3b6832235305300ad5e578
       <form onSubmit={sendMessage} className="p-3 bg-white border-t border-navy-100 flex gap-2">
         <input
           value={newMessage}
