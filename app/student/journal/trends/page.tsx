@@ -19,13 +19,23 @@ import {
 import { daysAgo, formatDayShort, isoDay, mood as moodDef, pluralize } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import { shouldPromptStudent } from "@/lib/support-indicator";
+import type { MoodValue, ConcernTag } from "@/lib/types";
+
+/** Shape of a document in the Firestore `journals` collection. */
+type JournalDoc = {
+  id: string;
+  userId?: string;
+  mood?: MoodValue;
+  tags?: ConcernTag[];
+  createdAt: string;
+};
 
 export default function MoodTrendsPage() {
   const { ready, state, indicator } = useStore();
   const myHandle = state.identity?.handle ?? "MindMate";
 
   // 🔥 Firebase States
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<JournalDoc[]>([]);
   const [loadingFirebase, setLoadingFirebase] = useState(true);
 
   // 1. FIREBASE SE DATA FETCH KARNA
@@ -35,9 +45,10 @@ export default function MoodTrendsPage() {
     const q = query(collection(db, "journals"), where("userId", "==", myHandle));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetched = snapshot.docs.map((doc) => ({
+      // doc.data() is untyped DocumentData — annotate what we expect back.
+      const fetched: JournalDoc[] = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+        ...(doc.data() as Omit<JournalDoc, "id">),
       }));
       setEntries(fetched);
       setLoadingFirebase(false);
@@ -57,8 +68,9 @@ export default function MoodTrendsPage() {
       return {
         id: e.id || `fallback-id-${i}`,
         date: cleanDate,
-        mood: e.mood,
-        tags: e.tags || [],
+        createdAt: rawDate,               // required by CheckIn
+        mood: e.mood as MoodValue,
+        tags: (e.tags ?? []) as ConcernTag[],
       };
     }).sort((a, b) => a.date.localeCompare(b.date)); 
   }, [entries]);

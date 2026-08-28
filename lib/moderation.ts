@@ -40,7 +40,8 @@ const HARMFUL_ADVICE_PATTERNS: RegExp[] = [
 ];
 
 const HARASSMENT_PATTERNS: RegExp[] = [
-  /\b(you'?re|ur)\s+(such\s+)?(a\s+)?(idiot|stupid|pathetic|worthless|loser)\b/i,
+  // `an?` so "you're such an idiot" is caught as well as "such a loser".
+  /\b(you'?re|ur)\s+(such\s+)?(an?\s+)?(idiot|stupid|pathetic|worthless|loser)\b/i,
   /\bshut\s+up\b/i,
   /\bnobody\s+cares\s+about\s+you\b/i,
   /\bget\s+over\s+it\b/i,
@@ -70,7 +71,12 @@ function firstMatch(text: string, patterns: RegExp[]): string[] {
   return hits;
 }
 
-export function screenContent(text: string): ScreenResult {
+/**
+ * The rule engine. Kept as a named export because it stays the fallback and
+ * the shadow-mode baseline once a model backend is registered — it is never
+ * deleted, only compared against.
+ */
+export function screenWithRules(text: string): ScreenResult {
   const body = text.trim();
   if (!body) return { ok: false, crisis: false, matched: [], message: "Write something first." };
 
@@ -135,6 +141,126 @@ export function screenContent(text: string): ScreenResult {
   }
 
   return { ok: true, crisis: false, matched: [] };
+}
+
+/**
+ * Synchronous screening. This is what every existing call site uses, and it
+ * always runs the rules — no network, no await, safe to call inside a store
+ * action. Model backends are reached through `screenContentAsync`.
+ */
+export function screenContent(text: string): ScreenResult {
+  return screenWithRules(text);
+}
+
+/* ------------------------------------------------------- model backends */
+
+/**
+ * The contract a trained classifier implements. M1 (crisis), M2 (toxicity),
+ * M3 (harmful advice) and M4 (PII) all reduce to this one shape, so the app
+ * never learns which model produced a result.
+ */
+export interface ScreenBackend {
+  readonly name: string;
+  screen(text: string): Promise<ScreenResult>;
+}
+
+/**
+ * `rules`  — rules decide, model never runs (default)
+ * `shadow` — both run, rules still decide, disagreements are recorded
+ * `model`  — model decides, rules are the fallback if it throws
+ */
+export type ScreenMode = "rules" | "shadow" | "model";
+
+/**
+ * Where the text came from. Private surfaces (peer chat, 1:1 support chat)
+ * promise the message is never retained, so their disagreement records carry
+ * the decision only and never the text.
+ */
+export type ScreenSurface = "community" | "private";
+
+let backend: ScreenBackend | null = null;
+let mode: ScreenMode = "rules";
+
+export function configureScreening(opts: {
+  backend?: ScreenBackend | null;
+  mode?: ScreenMode;
+}): void {
+  if (opts.backend !== undefined) backend = opts.backend;
+  if (opts.mode !== undefined) mode = opts.mode;
+}
+
+export function getScreeningConfig(): { backend: string | null; mode: ScreenMode } {
+  return { backend: backend?.name ?? null, mode };
+}
+
+/* ---------------------------------------------------- disagreement log */
+
+export interface ScreenDisagreement {
+  at: string;
+  backend: string;
+  surface: ScreenSurface;
+  /** community surfaces only — omitted entirely for private ones */
+  excerpt?: string;
+  rules: { crisis: boolean; reason?: FlagReason };
+  model: { crisis: boolean; reason?: FlagReason };
+}
+
+const DISAGREEMENT_LIMIT = 200;
+const disagreements: ScreenDisagreement[] = [];
+
+export function getDisagreements(): readonly ScreenDisagreement[] {
+  return disagreements;
+}
+
+export function clearDisagreements(): void {
+  disagreements.length = 0;
+}
+
+function record(
+  surface: ScreenSurface,
+  text: string,
+  rules: ScreenResult,
+  model: ScreenResult,
+): void {
+  const entry: ScreenDisagreement = {
+    at: new Date().toISOString(),
+    backend: backend?.name ?? "unknown",
+    surface,
+    rules: { crisis: rules.crisis, reason: rules.reason },
+    model: { crisis: model.crisis, reason: model.reason },
+  };
+  // Private surfaces record the decision only. Logging the text here would
+  // undo the "nothing is saved" promise the chat screens make.
+  if (surface === "community") entry.excerpt = text.slice(0, 140);
+  disagreements.push(entry);
+  if (disagreements.length > DISAGREEMENT_LIMIT) disagreements.shift();
+}
+
+function differs(a: ScreenResult, b: ScreenResult): boolean {
+  return a.ok !== b.ok || a.crisis !== b.crisis || a.reason !== b.reason;
+}
+
+/**
+ * The seam a model plugs into. Falls back to the rules whenever a backend is
+ * absent or throws, so screening degrades to the current behaviour rather
+ * than failing open.
+ */
+export async function screenContentAsync(
+  text: string,
+  surface: ScreenSurface = "community",
+): Promise<ScreenResult> {
+  const rules = screenWithRules(text);
+  if (!backend || mode === "rules") return rules;
+
+  let model: ScreenResult;
+  try {
+    model = await backend.screen(text);
+  } catch {
+    return rules;
+  }
+
+  if (differs(rules, model)) record(surface, text, rules, model);
+  return mode === "model" ? model : rules;
 }
 
 export const FLAG_REASON_COPY: Record<FlagReason, string> = {

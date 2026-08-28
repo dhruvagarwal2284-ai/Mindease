@@ -279,14 +279,30 @@ import { PrivateSpaceHeader, JournalCard, JournalEditor } from "@/components/jou
 import { EmptyState, LinkButton, SkeletonCard, Button } from "@/components/ui";
 import { pluralize } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import { JournalEntry } from "@/lib/types";
+import { JournalEntry, MoodValue, ConcernTag } from "@/lib/types";
+
+/** Shape of a document in the Firestore `journals` collection. */
+type JournalDoc = {
+  id: string;
+  userId?: string;
+  title?: string;
+  /** written by the full editor */
+  body?: string;
+  /** written by the quick-add path in lib/journalDb.ts — same thing, older name */
+  content?: string;
+  mood?: MoodValue;
+  tags?: ConcernTag[];
+  isDraft?: boolean;
+  createdAt: string;
+  updatedAt?: string;
+};
 
 export default function JournalHomePage() {
   const { ready, state, toast } = useStore();
   const myHandle = state.identity?.handle ?? "MindMate";
 
   // 🔥 Firebase States
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<JournalDoc[]>([]);
   const [loadingFirebase, setLoadingFirebase] = useState(true);
   
   // 🔥 Quick Entry States
@@ -303,9 +319,11 @@ export default function JournalHomePage() {
     const q = query(collection(db, "journals"), where("userId", "==", myHandle));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetched = snapshot.docs.map((doc) => ({
+      // doc.data() is untyped DocumentData, so annotate what we expect back —
+      // otherwise TypeScript only knows about `id` and every field read fails.
+      const fetched: JournalDoc[] = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+        ...(doc.data() as Omit<JournalDoc, "id">),
       }));
       // Date ke hisaab se sort karo (Newest first)
       fetched.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -347,8 +365,9 @@ export default function JournalHomePage() {
       return {
         id: entry.id || `fallback-id-${index}`, // 🔥 FIX 2: Red Error yahan se theek hoga
         date: cleanDate,                        // 🔥 FIX 3: Invalid Date yahan se theek hoga
-        mood: entry.mood,
-        tags: entry.tags || [],
+        createdAt: rawDate,                     // required by CheckIn
+        mood: entry.mood as MoodValue,
+        tags: (entry.tags ?? []) as ConcernTag[],
       };
     }).sort((a, b) => a.date.localeCompare(b.date)); 
   }, [entries]);
@@ -496,14 +515,18 @@ export default function JournalHomePage() {
             </h2>
             
             {entries.map((entry) => {
-              // 🔥 Data Normalize
-              const formattedEntry = {
+              // 🔥 Data Normalize — fill every field JournalEntry requires,
+              // since cloud docs come from two different write paths.
+              const formattedEntry: JournalEntry = {
                 ...entry,
-                body: entry.body || entry.content || "", 
+                body: entry.body || entry.content || "",
                 title: entry.title || "",
-                mood: entry.mood ?? 3, // Default mood if quick add doesn't have one
+                mood: entry.mood ?? 3,
                 createdAt: entry.createdAt || new Date().toISOString(),
+                updatedAt: entry.updatedAt || entry.createdAt || new Date().toISOString(),
                 tags: entry.tags || [],
+                isDraft: entry.isDraft ?? false,
+                sharedWithCounsellor: false,
               };
 
               return (

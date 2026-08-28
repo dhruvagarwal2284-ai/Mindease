@@ -67,7 +67,10 @@ export default function RequestCounsellingPage() {
       const caseData = {
         caseId: newCaseId,
         ownerId: state.identity?.handle || "MindMate User",
-        studentHandle: scope.pseudonym && state.identity?.handle ? state.identity.handle : "Anonymous", // Fallback added
+        // `contactHandle` is the real field on SharedDataScope. The old
+        // `scope.pseudonym` was always undefined, so every case filed as
+        // "Anonymous" even when the student consented to attaching it.
+        studentHandle: scope.contactHandle && state.identity?.handle ? state.identity.handle : "Anonymous",
         concern: note ? note.slice(0, 50) + "..." : "General support", // Gives counsellor a hint
         mode: mode,
         note: note || "", // Converts undefined/null to empty string

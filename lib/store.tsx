@@ -77,7 +77,7 @@ interface StoreValue {
   // 🔥 FIX: setIdentity yahan define kar diya
   setIdentity: (identity: AnonymousIdentity) => void;
   savedAccounts:{handle:string; pin:string}[];
-  savedAccountLocal:(handle:string, pin:string)=>void;
+  saveAccountLocal: (handle: string, pin: string) => void;
   setConsent: (key: ConsentKey, value: boolean) => void;
   setA11y: (key: keyof A11ySettings, value: boolean) => void;
   setSupportMode: (mode: SupportRoleMode) => void;
