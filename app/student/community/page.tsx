@@ -1,195 +1,188 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { PostCard } from "@/components/community";
-import { AnonymousModeBar } from "@/components/privacy";
-import { Button, Chip, EmptyState, SkeletonCard, Tabs } from "@/components/ui";
-import { daysAgo, isoDay } from "@/lib/format";
+import { useEffect, useState } from "react";
+import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useStore } from "@/lib/store";
-import { TOPICS } from "@/lib/types";
-import type { Post, Topic } from "@/lib/types";
 
-type TabKey = "foryou" | "recent" | "trending" | "unanswered";
+import { AnonymousModeBar } from "@/components/privacy";
+import { Button, EmptyState, SkeletonCard, Badge } from "@/components/ui";
+import { cx } from "@/lib/format";
 
-const TABS: { value: TabKey; label: string }[] = [
-  { value: "foryou", label: "For You" },
-  { value: "recent", label: "Recent" },
-  { value: "trending", label: "Trending" },
-  { value: "unanswered", label: "Unanswered" },
-];
+const TOPICS = ["All topics", "Academics", "Relationships", "Family", "Loneliness", "Career", "Financial stress", "Hostel life", "General"];
+const TABS = ["For You", "Recent", "Trending", "Unanswered"];
 
-function reactionTotal(post: Post): number {
-  return Object.values(post.reactions).reduce((s, n) => s + (n ?? 0), 0);
-}
+export default function CommunityPage() {
+  const { ready, state, toast } = useStore();
+  const myHandle = state.identity?.handle ?? "MindMate Anonymous";
 
-export default function CommunityFeedPage() {
-  const { ready, state } = useStore();
-  const [tab, setTab] = useState<TabKey>("foryou");
-  const [topic, setTopic] = useState<Topic | "All">("All");
-  const [showHidden, setShowHidden] = useState(false);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newPostText, setNewPostText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTopic, setActiveTopic] = useState("All topics");
+  const [activeTab, setActiveTab] = useState("Recent");
 
-  const replyCounts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const r of state.replies) {
-      if (r.moderation === "removed") continue;
-      map.set(r.postId, (map.get(r.postId) ?? 0) + 1);
-    }
-    return map;
-  }, [state.replies]);
+  // 🔥 1. FETCH GLOBAL POSTS (NO USER FILTER = VISIBLE TO ALL)
+  useEffect(() => {
+    const q = query(collection(db, "community_posts"), orderBy("createdAt", "desc"));
+    
+    const unsub = onSnapshot(q, (snap) => {
+      const fetchedPosts = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPosts(fetchedPosts);
+      setLoading(false);
+    });
 
-  /** Topics the student has been checking in about lately — drives "For You". */
-  const myTopics = useMemo(() => {
-    const cutoff = isoDay(daysAgo(21));
-    const counts = new Map<string, number>();
-    for (const c of state.checkIns) {
-      if (c.date < cutoff) continue;
-      for (const t of c.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
-    }
-    return counts;
-  }, [state.checkIns]);
+    return () => unsub();
+  }, []);
 
-  const { visible, hiddenCount } = useMemo(() => {
-    const base = state.posts.filter(
-      (p) => p.moderation !== "removed" && (topic === "All" || p.topic === topic),
-    );
+  // 🔥 2. CREATE A NEW PUBLIC POST
+  const handlePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPostText.trim()) return;
 
-    const suppressed = base.filter(
-      (p) => p.hidden || state.blockedHandles.includes(p.authorHandle),
-    );
-    let list = showHidden
-      ? base
-      : base.filter((p) => !p.hidden && !state.blockedHandles.includes(p.authorHandle));
-
-    if (tab === "recent") {
-      list = [...list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-    } else if (tab === "trending") {
-      list = [...list].sort((a, b) => reactionTotal(b) - reactionTotal(a));
-    } else if (tab === "unanswered") {
-      list = list
-        .filter((p) => (replyCounts.get(p.id) ?? 0) === 0)
-        .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-    } else {
-      const score = (p: Post) => {
-        const topicHits = myTopics.get(p.topic) ?? 0;
-        const own = p.authorIsSelf ? 5 : 0;
-        return own + topicHits * 3 + Math.min(3, reactionTotal(p) / 10);
-      };
-      list = [...list].sort((a, b) => {
-        const d = score(b) - score(a);
-        return d !== 0 ? d : a.createdAt < b.createdAt ? 1 : -1;
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, "community_posts"), {
+        text: newPostText,
+        authorHandle: myHandle,
+        topic: activeTopic === "All topics" ? "General" : activeTopic,
+        likes: 0,
+        createdAt: new Date().toISOString(),
       });
+      setNewPostText("");
+      toast("Post shared with the community!", "success");
+    } catch (error) {
+      console.error("Error posting:", error);
+      toast("Failed to post. Try again.", "urgent");
     }
+    setIsSubmitting(false);
+  };
 
-    return { visible: list, hiddenCount: suppressed.length };
-  }, [state.posts, state.blockedHandles, topic, tab, replyCounts, myTopics, showHidden]);
+  // Filter posts based on selected topic
+  const displayedPosts = activeTopic === "All topics" 
+    ? posts 
+    : posts.filter(p => p.topic === activeTopic);
 
   if (!ready) {
     return (
-      <div className="space-y-3">
-        <SkeletonCard />
-        <SkeletonCard />
+      <div className="space-y-4">
+        <SkeletonCard /><SkeletonCard />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 pb-10">
       <AnonymousModeBar />
 
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-navy-900">Community</h1>
-        <p className="muted mt-1 text-sm">
-          Students on your campus, writing anonymously. Be kind — someone is having the
-          worst week of their year in here.
+        <h1 className="text-2xl font-bold tracking-tight text-navy-900">Community</h1>
+        <p className="mt-1 text-sm text-navy-600">
+          Students on your campus, writing anonymously. Be kind — someone is having the worst week of their year in here.
         </p>
       </header>
 
-      <Link
-        href="/student/community/new"
-        className="flex min-h-14 items-center gap-3 rounded-2xl border border-navy-200 bg-white px-4 text-navy-500 transition-colors hover:border-teal-300 hover:bg-teal-50/50"
-      >
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-navy-100 text-sm"
-          aria-hidden
-        >
-          🕶️
-        </span>
-        <span className="flex-1 text-[0.95rem]">What&rsquo;s on your mind?</span>
-        <span className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-medium text-white">
-          Post
-        </span>
-      </Link>
+      {/* CREATE POST INPUT */}
+      <form onSubmit={handlePost} className="card p-2 pl-4 flex items-center gap-3 border-navy-200 shadow-sm focus-within:border-teal-500 focus-within:ring-1 focus-within:ring-teal-500 transition-all">
+        <span className="text-xl opacity-60" aria-hidden>👀</span>
+        <input
+          type="text"
+          value={newPostText}
+          onChange={(e) => setNewPostText(e.target.value)}
+          placeholder="What's on your mind?"
+          className="flex-1 bg-transparent border-none focus:outline-none text-sm text-navy-900 placeholder:text-navy-400 py-3"
+          disabled={isSubmitting}
+        />
+        <Button type="submit" tone="primary" disabled={!newPostText.trim() || isSubmitting}>
+          {isSubmitting ? "Posting..." : "Post"}
+        </Button>
+      </form>
 
-      <Tabs tabs={TABS} value={tab} onChange={setTab} />
-
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-        <Chip selected={topic === "All"} onClick={() => setTopic("All")}>
-          All topics
-        </Chip>
-        {TOPICS.map((t) => (
-          <Chip key={t} selected={topic === t} onClick={() => setTopic(t)}>
-            {t}
-          </Chip>
+      {/* TABS */}
+      <div className="flex gap-4 border-b border-navy-100 pb-2 text-sm font-medium">
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cx(
+              "px-1 py-1 transition-colors",
+              activeTab === tab ? "text-teal-800 border-b-2 border-teal-800" : "text-navy-500 hover:text-navy-900"
+            )}
+          >
+            {tab}
+          </button>
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <p className="muted text-xs" aria-live="polite">
-          {visible.length === 1 ? "1 post" : `${visible.length} posts`}
-          {topic !== "All" ? ` in ${topic}` : ""}
-        </p>
-        <Link
-          href="/student/community/saved"
-          className="text-xs font-medium text-teal-800 hover:underline"
-        >
-          Saved posts →
-        </Link>
+      {/* TOPIC FILTERS */}
+      <div className="flex flex-wrap gap-2">
+        {TOPICS.map(topic => (
+          <button
+            key={topic}
+            onClick={() => setActiveTopic(topic)}
+            className={cx(
+              "px-4 py-1.5 rounded-full text-xs font-semibold border transition-colors",
+              activeTopic === topic 
+                ? "bg-teal-700 text-white border-teal-700" 
+                : "bg-white text-navy-700 border-navy-200 hover:bg-navy-50"
+            )}
+          >
+            {topic}
+          </button>
+        ))}
       </div>
 
-      {hiddenCount > 0 ? (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-navy-100 bg-navy-50 px-4 py-2.5 text-sm">
-          <span className="muted">
-            {hiddenCount === 1 ? "1 post is" : `${hiddenCount} posts are`} hidden or from
-            someone you blocked.
-          </span>
-          <Button size="sm" tone="ghost" onClick={() => setShowHidden((s) => !s)}>
-            {showHidden ? "Hide again" : "Show them"}
-          </Button>
-        </div>
-      ) : null}
+      <div className="flex justify-between items-center text-xs text-navy-500 font-medium">
+        <span>{displayedPosts.length} posts</span>
+        <button className="hover:underline">Saved posts →</button>
+      </div>
 
-      {state.simulate.offline ? (
-        <EmptyState
-          icon="📴"
-          title="You're offline"
-          body="The feed needs a connection. Anything you were writing has been saved on this device."
-        />
-      ) : visible.length === 0 ? (
-        <EmptyState
-          icon="🌱"
-          title="No posts yet. Be the first to share something."
-          body={
-            topic === "All"
-              ? "Whatever you write here shows up under your pseudonym, never your name."
-              : `Nothing under ${topic} yet. Yours could be the first.`
-          }
-          action={
-            <Link
-              href="/student/community/new"
-              className="inline-flex min-h-11 items-center rounded-xl bg-teal-700 px-4 font-medium text-white hover:bg-teal-800"
-            >
-              Write a post
-            </Link>
-          }
-        />
-      ) : (
-        <div className="space-y-3">
-          {visible.map((p) => (
-            <PostCard key={p.id} post={p} replyCount={replyCounts.get(p.id) ?? 0} />
-          ))}
-        </div>
-      )}
+      {/* POSTS FEED */}
+      <div className="space-y-4">
+        {loading ? (
+          <SkeletonCard />
+        ) : displayedPosts.length === 0 ? (
+          <EmptyState
+            icon="🌱"
+            title="No posts yet. Be the first to share something."
+            body="Whatever you write here shows up under your pseudonym, never your name."
+          />
+        ) : (
+          displayedPosts.map((post) => (
+            <article key={post.id} className="card p-5 border-navy-100 bg-white hover:border-navy-200 transition-colors shadow-sm">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-xs">
+                    {post.authorHandle.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-navy-900">{post.authorHandle}</p>
+                    <p className="text-[11px] text-navy-400 font-medium">
+                      {new Date(post.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    </p>
+                  </div>
+                </div>
+                <Badge tone="navy">{post.topic}</Badge>
+              </div>
+              
+              <p className="text-sm text-navy-800 whitespace-pre-wrap leading-relaxed">
+                {post.text}
+              </p>
+              
+              <div className="mt-4 flex gap-4 border-t border-navy-50 pt-3">
+                <button className="flex items-center gap-1.5 text-xs font-semibold text-navy-500 hover:text-teal-700 transition-colors">
+                  <span aria-hidden>🤍</span> {post.likes || 0} Likes
+                </button>
+                <button className="flex items-center gap-1.5 text-xs font-semibold text-navy-500 hover:text-teal-700 transition-colors">
+                  <span aria-hidden>💬</span> Reply
+                </button>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
     </div>
   );
 }

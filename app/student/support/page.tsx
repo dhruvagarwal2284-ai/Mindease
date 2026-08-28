@@ -2,187 +2,138 @@
 
 import { ThemeSelector } from "@/components/ThemeSelector";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
+// 🔥 NAYA: Firebase Imports
+import { collection, query, onSnapshot, orderBy,doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 import { DailyCheckIn } from "@/components/checkin";
 import { AnonymousModeBar } from "@/components/privacy";
-import {
-  AiUnavailable,
-  StudentSupportPrompt,
-} from "@/components/support";
-import {
-  Badge,
-  LinkButton,
-  SkeletonCard,
-} from "@/components/ui";
+import { AiUnavailable, StudentSupportPrompt } from "@/components/support";
+import { Badge, Button, LinkButton, SkeletonCard } from "@/components/ui";
+import { LiveChat } from "@/components/ui/LiveChat"; 
 import { cx, isoDay } from "@/lib/format";
 import { recommendResources } from "@/lib/resources";
 import { useStore } from "@/lib/store";
 import { shouldPromptStudent } from "@/lib/support-indicator";
 
-/* --------------------------------------------------------------- greeting */
 
 function greetingFor(date: Date): string {
   const h = date.getHours();
-
   if (h < 5) return "You're up late";
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   if (h < 22) return "Good evening";
-
   return "Winding down";
 }
 
-/* ---------------------------------------------------------- quick actions */
-
-const QUICK_ACTIONS: {
-  href: string;
-  label: string;
-  body: string;
-  icon: string;
-  className: string;
-}[] = [
+const QUICK_ACTIONS = [
   {
     href: "/student/journal/new",
     label: "Write privately",
     body: "A page only you can read. Nothing leaves this device.",
     icon: "📓",
-    className:
-      "border-info-200 bg-info-50 text-info-900 hover:border-info-300 hover:bg-info-100/70",
+    className: "border-info-200 bg-info-50 text-info-900 hover:border-info-300 hover:bg-info-100/70",
   },
   {
     href: "/student/support/request",
     label: "Book a counsellor",
     body: "Schedule a formal appointment with campus counselling.",
     icon: "🤝",
-    className:
-      "border-pro-200 bg-pro-50 text-pro-900 hover:border-pro-300 hover:bg-pro-100/70",
+    className: "border-pro-200 bg-pro-50 text-pro-900 hover:border-pro-300 hover:bg-pro-100/70",
   },
 ];
 
-/* ------------------------------------------------------------------- page */
-
 export default function StudentHomePage() {
-  const {
-    ready,
-    state,
-    indicator,
-    dismissSupportPrompt,
-  } = useStore();
+  const { ready, state, indicator, toast, dismissSupportPrompt } = useStore();
+  const myHandle = state.identity?.handle ?? "MindMate";
+
+  const [activeChatCase, setActiveChatCase] = useState<any | null>(null);
+  
+  // 🔥 FIREBASE REAL-TIME CASES
+  const [realCases, setRealCases] = useState<any[]>([]);
+
+  // useEffect(() => {
+  //   // Fetching real cases from Firebase instead of local dummy data
+  //   const q = query(collection(db, "cases"), orderBy("updatedAt", "desc"));
+  //   const unsub = onSnapshot(q, (snap) => {
+  //     const allCases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  //     // Hackathon Hack: If you didn't save a strict userId, we show recent cases here for the demo.
+  //     // Ideally, filter by: allCases.filter(c => c.userId === myHandle)
+  //     setRealCases(allCases.slice(0, 5)); 
+  //   });
+  //   return () => unsub();
+  // }, [myHandle]);
+
+  useEffect(() => {
+    // Fetching real cases from Firebase instead of local dummy data
+    const q = query(collection(db, "cases"), orderBy("updatedAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      
+      const allCases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      // 🔥 YAHAN HAI FIX: Sab cases me se sirf apne account (myHandle) wale filter karo
+      // 🔥 YAHAN HAI FIX: Ab hum hidden 'ownerId' se filter kar rahe hain
+      const myOwnCases = allCases.filter(c => c.ownerId === myHandle || c.studentHandle === myHandle);
+      
+      setRealCases(myOwnCases);
+
+    });
+    return () => unsub();
+  }, [myHandle]);
 
   const recentTags = useMemo(() => {
-    const recent = [...state.checkIns]
-      .sort((a, b) => (a.date < b.date ? 1 : -1))
-      .slice(0, 5);
-
-    return Array.from(
-      new Set(recent.flatMap((c) => c.tags as string[])),
-    );
+    const recent = [...state.checkIns].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5);
+    return Array.from(new Set(recent.flatMap((c) => c.tags as string[])));
   }, [state.checkIns]);
 
-  const recommended = useMemo(
-    () => recommendResources(recentTags, 3),
-    [recentTags],
-  );
+  const recommended = useMemo(() => recommendResources(recentTags, 3), [recentTags]);
 
-  // Get active cases for the student to track
-  const myCases = useMemo(() => {
-    return (state.cases || []).filter(c => c.status !== 'closed');
-  }, [state.cases]);
+ const handleWithdraw = async (caseId: string) => {
+    if (confirm("Are you sure you want to withdraw this request?")) {
+      await deleteDoc(doc(db, "cases", caseId));
+      toast("Request withdrawn successfully", "info");
+      setActiveChatCase(null); // Drawer band karne ke liye
+    }
+  };
 
   if (!ready) {
     return (
-      <div className="space-y-3">
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-      </div>
+      <div className="space-y-3"><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
     );
   }
 
   const analysisOn = state.consent.aiSupportAnalysis;
-  const promptDismissedToday = state.dismissedPromptOn === isoDay();
-
-  const showPrompt =
-    analysisOn &&
-    !state.simulate.aiDown &&
-    shouldPromptStudent(indicator) &&
-    !promptDismissedToday;
-
-  const showAiDown = analysisOn && state.simulate.aiDown;
+  const showPrompt = analysisOn && !state.simulate.aiDown && shouldPromptStudent(indicator) && state.dismissedPromptOn !== isoDay();
 
   return (
     <div className="space-y-5 pb-0">
-
-      {/* ------------------------------------------------------ theme */}
       <ThemeSelector />
 
-      {/* ------------------------------------------------------- greeting */}
       <header className="animate-fade-up">
-        <p className="muted text-sm">
-          {greetingFor(new Date())},
-        </p>
-
-        <h1 className="text-2xl font-semibold tracking-tight text-navy-900">
-          {state.identity?.handle ?? "MindMate"}
-        </h1>
-
-        <p className="muted mt-1 text-sm">
-          What support could you use right now? Nothing here is compulsory.
-        </p>
-
+        <p className="muted text-sm">{greetingFor(new Date())},</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-navy-900">{myHandle}</h1>
+        <p className="muted mt-1 text-sm">What support could you use right now?</p>
         <AnonymousModeBar className="mt-3" />
       </header>
 
-      {/* ------------------------------------------------------- check-in */}
       <DailyCheckIn />
 
-      {/* -------------------------------------------------- support offer */}
       <div aria-live="polite">
-        {showAiDown ? <AiUnavailable /> : null}
-
-        {showPrompt ? (
-          <StudentSupportPrompt
-            indicator={indicator}
-            onDismiss={dismissSupportPrompt}
-            className="animate-fade-up"
-          />
-        ) : null}
+        {analysisOn && state.simulate.aiDown ? <AiUnavailable /> : null}
+        {showPrompt ? <StudentSupportPrompt indicator={indicator} onDismiss={dismissSupportPrompt} className="animate-fade-up" /> : null}
       </div>
 
-      {/* -------------------------------------------------- quick actions */}
       <section aria-labelledby="quick-actions-heading">
-        <h2
-          id="quick-actions-heading"
-          className="mb-3 text-lg font-semibold tracking-tight text-navy-900"
-        >
-          What would help right now?
-        </h2>
-
+        <h2 id="quick-actions-heading" className="mb-3 text-lg font-semibold tracking-tight text-navy-900">What would help right now?</h2>
         <ul className="grid grid-cols-2 gap-3">
           {QUICK_ACTIONS.map((a) => (
             <li key={a.href}>
-              <Link
-                href={a.href}
-                className={cx(
-                  "flex h-full min-h-[7.5rem] flex-col justify-between rounded-2xl border p-4 transition-colors",
-                  a.className,
-                )}
-              >
-                <span
-                  className="text-2xl leading-none"
-                  aria-hidden
-                >
-                  {a.icon}
-                </span>
-
+              <Link href={a.href} className={cx("flex h-full min-h-[7.5rem] flex-col justify-between rounded-2xl border p-4 transition-colors", a.className)}>
+                <span className="text-2xl leading-none" aria-hidden>{a.icon}</span>
                 <span className="mt-3 block">
-                  <span className="block font-semibold">
-                    {a.label}
-                  </span>
-
-                  <span className="mt-0.5 block text-xs opacity-80">
-                    {a.body}
-                  </span>
+                  <span className="block font-semibold">{a.label}</span>
+                  <span className="mt-0.5 block text-xs opacity-80">{a.body}</span>
                 </span>
               </Link>
             </li>
@@ -190,36 +141,37 @@ export default function StudentHomePage() {
         </ul>
       </section>
 
-      {/* -------------------------------------------------- active tracking widget 🔥 */}
-      {myCases.length > 0 && (
+      {/* 🔥 FIREBASE ACTIVE TRACKING WIDGET */}
+      {realCases.length > 0 && (
         <section aria-labelledby="tracking-heading" className="animate-fade-up">
-          <h2
-            id="tracking-heading"
-            className="mb-3 text-lg font-semibold tracking-tight text-navy-900 flex items-center gap-2"
-          >
-            📋 Track your requests
+          <h2 id="tracking-heading" className="mb-3 text-lg font-semibold tracking-tight text-navy-900 flex items-center gap-2">
+            📋 Track your requests (Live)
           </h2>
           <div className="space-y-3">
-            {myCases.map((c) => (
-              <div key={c.id} className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-amber-200/50 bg-amber-50/30">
+            {realCases.map((c) => (
+              <div key={c.id} className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-teal-200 bg-white shadow-sm hover:shadow-md">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-navy-900">{c.caseId}</span>
+                    <span className="font-bold text-navy-900">#{c.caseId || c.id.slice(-4).toUpperCase()}</span>
                     <Badge tone={c.status === 'requested' ? 'amber' : c.status === 'scheduled' ? 'teal' : 'pro'}>
                       {c.status.replace('_', ' ').toUpperCase()}
                     </Badge>
                   </div>
                   <p className="text-sm text-navy-700 font-medium">
-                    Requested {c.mode.toLowerCase()} support for {c.concern.toLowerCase()}
+                    Requested {c.mode?.toLowerCase() || 'chat'} support for {c.concern?.toLowerCase() || 'general support'}
                   </p>
                   <p className="text-xs text-navy-500 mt-1">
-                    Last updated: {new Date(c.updatedAt).toLocaleDateString()}
+                    Updated: {c.updatedAt ? new Date(c.updatedAt).toLocaleString() : 'Just now'}
                   </p>
                 </div>
-                <div className="shrink-0">
-                  <LinkButton href="/student/support" tone="secondary" size="sm">
-                    View Details
-                  </LinkButton>
+                
+                <div className="shrink-0 flex flex-wrap gap-2">
+                  <Button tone="primary" size="sm" onClick={() => setActiveChatCase(c)}>
+                    Open Chat 💬
+                  </Button>
+                  <Button tone="neutral" size="sm" onClick={() => handleWithdraw(c.id)}>
+                    Withdraw ✕
+                  </Button>
                 </div>
               </div>
             ))}
@@ -227,86 +179,45 @@ export default function StudentHomePage() {
         </section>
       )}
 
-      {/* ----------------------------------------------------- recommended */}
-      <section aria-labelledby="recommended-heading">
-        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h2
-              id="recommended-heading"
-              className="text-lg font-semibold tracking-tight text-navy-900"
-            >
-              {analysisOn
-                ? "Recommended for you"
-                : "Reading that might help"}
-            </h2>
+      {/* 🔥 THE MAGIC DRAWER WITH CONTEXT */}
+      {activeChatCase && (
+        <div className="fixed inset-0 z-[999] flex justify-end bg-navy-900/40 backdrop-blur-sm transition-all duration-300">
+          <div className="h-screen w-full sm:w-[450px] bg-white shadow-2xl animate-in slide-in-from-right-8 duration-300 flex flex-col border-l border-navy-200">
+            
+            {/* 📝 CONTEXT HEADER (What the student originally wrote) */}
+            <div className="bg-navy-50 p-5 border-b border-navy-200">
+              <div className="flex justify-between items-start mb-2">
+                <h2 className="font-bold text-navy-900 text-lg">Case #{activeChatCase.caseId || activeChatCase.id.slice(-4).toUpperCase()}</h2>
+                <Badge tone={activeChatCase.status === 'requested' ? 'amber' : 'teal'}>
+                  {activeChatCase.status.toUpperCase()}
+                </Badge>
+              </div>
+              <div className="space-y-1 text-sm text-navy-700 bg-white p-3 rounded-lg border border-navy-100 shadow-sm mt-3">
+                <p><span className="font-semibold text-navy-900">Concern:</span> {activeChatCase.concern || 'General support'}</p>
+                <p><span className="font-semibold text-navy-900">Mode:</span> {activeChatCase.mode || 'Chat'}</p>
+                <p className="mt-2"><span className="font-semibold text-navy-900 block mb-1">Your Note:</span> 
+                  <span className="italic">"{activeChatCase.note || "No additional note provided."}"</span>
+                </p>
+              </div>
+            </div>
 
-            <p className="muted mt-0.5 text-sm">
-              {analysisOn
-                ? recentTags.length
-                  ? `Picked from the topics you tapped recently: ${recentTags
-                      .slice(0, 3)
-                      .join(", ")}.`
-                  : "A place to start until you tell us more."
-                : "Support analysis is off, so this is just the general shelf."}
-            </p>
+            {/* LIVE CHAT */}
+            {/* <div className="flex-1 overflow-hidden relative">
+              <LiveChat chatId={activeChatCase.id} onClose={() => setActiveChatCase(null)} />
+            </div> */}
+{/* LIVE CHAT */}
+            <div className="flex-1 overflow-hidden relative">
+              <LiveChat 
+                chatId={activeChatCase.id} 
+                userType="student" 
+                onClose={() => setActiveChatCase(null)} 
+              />
+            </div>
+
+
           </div>
         </div>
-
-        {analysisOn ? (
-          <ul className="space-y-2.5">
-            {recommended.map((r) => (
-              <li key={r.id}>
-                <Link
-                  href="/student/support"
-                  className="card flex min-h-11 items-start gap-3 p-4 transition-colors hover:border-teal-200 hover:bg-teal-50/40"
-                >
-                  <span
-                    className="text-xl leading-none"
-                    aria-hidden
-                  >
-                    📄
-                  </span>
-
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-medium text-navy-900">
-                      {r.title}
-                    </span>
-
-                    <span className="muted mt-0.5 block text-sm">
-                      {r.summary}
-                    </span>
-
-                    <span className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <Badge tone="teal">
-                        {r.category}
-                      </Badge>
-
-                      <span className="muted text-xs">
-                        {r.minutes} min read
-                      </span>
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="card p-4">
-            <p className="text-sm text-navy-700">
-              MindEase is not looking at your check-ins, so nothing
-              is picked out for you. The full library is still open
-              to browse whenever you want it.
-            </p>
-
-            <LinkButton
-              href="/student/support"
-              className="mt-3"
-            >
-              Browse resources
-            </LinkButton>
-          </div>
-        )}
-      </section>
+      )}
 
     </div>
   );

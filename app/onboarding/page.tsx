@@ -79,7 +79,7 @@ export default function OnboardingPage() {
   const [consent, setConsent] = useState<ConsentSettings>({ ...DEFAULT_CONSENT });
   const [supportMode, setSupportMode] = useState<SupportRoleMode>("seeking");
   const [newPin, setNewPin] = useState("");
-
+  const [institute, setInstitute] = useState(""); // 🔥 NAYA: Institute store karne ke liye
   if (!ready) {
     return (
       <main id="main" className="mx-auto max-w-xl px-5 py-16">
@@ -92,11 +92,17 @@ export default function OnboardingPage() {
     if (!identity) setIdentity(generateIdentity());
   };
 
-  const next = () => {
+ const next = () => {
     if (step === 2) ensureIdentity();
-    if (step === 3 && (!newPin || newPin.length < 4)) {
-      alert("Please set a 4-digit PIN to secure your account before continuing.");
-      return;
+    if (step === 3) {
+      if (!newPin || newPin.length < 4) {
+        alert("Please set a 4-digit PIN to secure your account before continuing.");
+        return;
+      }
+      if (institute !== "Indian Institute of Information Technology Guwahati") {
+        alert("Currently, MindEase is exclusively available for students of Indian Institute of Information Technology Guwahati.");
+        return;
+      }
     }
     setStep((s) => Math.min(STEPS.length - 1, s + 1));
   };
@@ -244,7 +250,7 @@ export default function OnboardingPage() {
           </section>
         ) : null}
 
-        {/* 4 identity */}
+       {/* 4 identity */}
         {step === 3 ? (
           <section aria-labelledby="s3">
             <h1 id="s3" className="text-2xl font-semibold tracking-tight text-navy-900">
@@ -275,7 +281,7 @@ export default function OnboardingPage() {
               </Button>
             </div>
 
-            {/* 4-digit PIN Box */}
+            {/* 🔥 YAHAN HAI TERA WAPAS AAYA HUA 4-DIGIT PIN BOX 🔥 */}
             <div className="mt-5 rounded-xl border border-navy-100 bg-white p-5 text-center shadow-xs">
               <p className="text-sm font-bold text-navy-900 mb-1">Set a 4-digit PIN</p>
               <p className="muted text-xs mb-4">
@@ -290,6 +296,25 @@ export default function OnboardingPage() {
                 onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
                 className="w-36 px-4 py-2 text-center text-2xl tracking-[0.4em] border border-navy-200 rounded-lg outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 font-mono bg-navy-50/50"
               />
+            </div>
+
+            {/* Select Institute Box */}
+            <div className="mt-5 rounded-xl border border-navy-100 bg-white p-5 shadow-xs">
+              <p className="text-sm font-bold text-navy-900 mb-1">Select your Institute</p>
+              <p className="muted text-xs mb-4">
+                MindEase is currently rolling out to specific campuses to maintain a closed, safe peer network.
+              </p>
+              <select
+                value={institute}
+                onChange={(e) => setInstitute(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-navy-200 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-sm bg-navy-50/50 cursor-pointer font-medium text-navy-900"
+              >
+                <option value="" disabled>-- Choose your campus --</option>
+                <option value="Indian Institute of Technology Bombay">Indian Institute of Technology Bombay (Waitlisted)</option>
+                <option value="Indian Institute of Information Technology Guwahati">Indian Institute of Information Technology Guwahati</option>
+                <option value="National Institute of Technology Delhi">National Institute of Technology Delhi (Waitlisted)</option>
+                <option value="Delhi University">Delhi University (Waitlisted)</option>
+              </select>
             </div>
 
             <div className="mt-5 rounded-xl border border-navy-100 bg-white p-4">
@@ -456,8 +481,13 @@ export default function OnboardingPage() {
               Skip
             </Button>
           ) : null}
-          {step < STEPS.length - 1 ? (
-            <Button tone="primary" size="lg" onClick={next}>
+         {step < STEPS.length - 1 ? (
+            <Button 
+              tone="primary" 
+              size="lg" 
+              onClick={next}
+              disabled={step === 3 && (newPin.length < 4 || institute !== "Indian Institute of Information Technology Guwahati")}
+            >
               {step === 0 ? "Get started" : "Continue"}
             </Button>
           ) : (

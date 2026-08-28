@@ -261,10 +261,10 @@ function getStudentTabs(supportMode: string): StudentTab[] {
   // first three entries and rejects the `urgent` flag added further down.
   const tabs: StudentTab[] = [
     { href: "/student/home", label: "Home", icon: "🏠" },
+    { href: "/student/accounts", label: "My Accounts", icon: "👤" }, // 🔥 NAYA LINK YAHAN ADD HUA HAI
     { href: "/student/community", label: "Community", icon: "💬" },
     { href: "/student/journal", label: "Journal", icon: "📓" },
   ];
-
   if (supportMode === "supporting") {
     tabs.push({ href: "/student/peer", label: "Peer Hub", icon: "🫂" });
     tabs.push({ href: "/student/leaderboard", label: "Leaderboard", icon: "🏆" });
@@ -544,25 +544,19 @@ export function CounsellorSidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function CounsellorTopBar({ title }: { title: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <header className="no-print sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-navy-100 bg-white/90 px-4 backdrop-blur lg:px-6">
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Open navigation"
-        className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-navy-100 lg:hidden"
-      >
-        <span aria-hidden>☰</span>
-      </button>
-      <h1 className="truncate text-base font-semibold text-navy-900">{title}</h1>
-      <div className="ml-auto flex items-center gap-1">
-        <NotificationBell audience="counsellor" tone="counsellor" />
-      </div>
+// Tere components/nav.tsx file ke andar
 
-      <Drawer open={open} onClose={() => setOpen(false)} title="Navigation">
-        <CounsellorSidebar onNavigate={() => setOpen(false)} />
-      </Drawer>
+export function CounsellorTopBar({ title, onMenuClick }: { title: string, onMenuClick?: () => void }) {
+  return (
+    <header className="flex h-14 items-center justify-between border-b border-navy-100 bg-white px-4 lg:hidden">
+      <div className="flex items-center gap-3">
+        {/* 🔥 Attach onMenuClick to the hamburger button */}
+        <button onClick={onMenuClick} className="p-2 -ml-2 text-navy-500 hover:bg-navy-50 rounded-lg">
+          <span aria-hidden className="text-xl">≡</span> {/* Replace with your actual icon */}
+        </button>
+        <h1 className="font-semibold text-navy-900">{title}</h1>
+      </div>
+      {/* Baaki ka tera top bar content (jaise notification bell wagaira) */}
     </header>
   );
 }
