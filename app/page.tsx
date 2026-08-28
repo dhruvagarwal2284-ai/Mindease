@@ -10,35 +10,39 @@ import { db } from "@/lib/firebase";
 
 const FEATURES = [
   {
-    icon: "🕶️",
+    badge: "● Live 1:1 · Ephemeral",
     title: "Anonymous Peer Chat",
     description: "Real-time 1:1 ephemeral conversations with fellow students. No real names, roll numbers, or chat histories are ever stored.",
     link: "/student/peer",
     linkText: "Try Peer Chat",
+    image: "/images/features/peer-chat.png",
     badgeTone: "bg-teal-50/90 border-teal-200/80 text-teal-900",
   },
   {
-    icon: "🔒",
+    badge: "🔒 Device-Only Storage",
     title: "Private Local Journal",
     description: "A safe place to write, reflect, and track mood trends. Your thoughts remain encrypted on your device and are never shared without permission.",
     link: "/student/journal",
     linkText: "Open Journal",
+    image: "/images/features/journal.png",
     badgeTone: "bg-indigo-50/90 border-indigo-200/80 text-indigo-950",
   },
   {
-    icon: "🤖",
+    badge: "🌱 Self-Paced Guides",
     title: "AI Support & Resources",
     description: "Intelligent self-check-in insights and tailored campus coping guides for exam stress, burnout, and sleep without automated diagnosis.",
     link: "/student/support",
     linkText: "Browse Library",
+    image: "/images/features/resources.png",
     badgeTone: "bg-purple-50/90 border-purple-200/80 text-purple-950",
   },
   {
-    icon: "🤝",
+    badge: "🤝 Direct Campus Pathway",
     title: "Consent-First Counselling",
     description: "Connect with campus counsellors on your own terms. Choose exactly what information leaves your device item-by-item before booking.",
     link: "/student/support/request",
     linkText: "Book Support",
+    image: "/images/features/counselling.png",
     badgeTone: "bg-emerald-50/90 border-emerald-200/80 text-emerald-950",
   },
 ];
@@ -182,9 +186,9 @@ const userData = userSnap.data() as any; // 🔥 TS ko bypass karne ke liye
           </div>
         </section>
 
-        <section id="features" className="w-full pt-2 pb-14 sm:pt-4 sm:pb-18 bg-transparent">
+        <section id="features" className="w-full pt-2 pb-12 sm:pt-4 sm:pb-16 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
+            <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
               <p className="text-xs font-extrabold uppercase tracking-wider text-teal-900">
                 Core Capabilities
               </p>
@@ -193,17 +197,41 @@ const userData = userSnap.data() as any; // 🔥 TS ko bypass karne ke liye
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* 2x2 Grid Layout: 2 cards per row, 2 rows */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
               {FEATURES.map((feat) => (
-                <div key={feat.title} className="rounded-3xl border border-white/80 bg-white/65 backdrop-blur-xl p-5 sm:p-6 shadow-lg shadow-navy-950/5 transition-all duration-300 hover:-translate-y-1.5 hover:bg-white/80 hover:shadow-xl hover:border-white flex flex-col justify-between group">
+                <div
+                  key={feat.title}
+                  className="relative rounded-3xl border border-white/80 bg-white/65 backdrop-blur-xl p-6 sm:p-8 shadow-lg shadow-navy-950/5 transition-all duration-300 hover:-translate-y-1.5 hover:bg-white/80 hover:shadow-xl hover:border-white flex flex-col justify-between group overflow-hidden"
+                >
                   <div>
-                    <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border text-lg mb-3 shadow-2xs ${feat.badgeTone}`} aria-hidden>
-                      {feat.icon}
+                    {/* Top Row: Left Pill Badge & Top-Right Illustration Graphic */}
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <div
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-bold shadow-2xs ${feat.badgeTone}`}
+                      >
+                        {feat.badge}
+                      </div>
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 -mt-1 -mr-1">
+                        <Image
+                          src={feat.image}
+                          alt={feat.title}
+                          width={80}
+                          height={80}
+                          className="object-contain w-full h-full"
+                        />
+                      </div>
                     </div>
-                    <h3 className="text-base font-extrabold text-navy-950 tracking-tight">{feat.title}</h3>
-                    <p className="mt-1.5 text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">{feat.description}</p>
+
+                    <h3 className="text-xl sm:text-2xl font-black text-navy-950 tracking-tight">
+                      {feat.title}
+                    </h3>
+                    <p className="mt-2 text-sm sm:text-base text-navy-800 leading-relaxed font-normal">
+                      {feat.description}
+                    </p>
                   </div>
-                  <div className="mt-5 pt-3.5 border-t border-navy-900/10">
+
+                  <div className="mt-6 pt-4 border-t border-navy-900/10">
                     <Link
                       href={feat.link}
                       className="inline-flex items-center text-xs sm:text-sm font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
@@ -213,6 +241,71 @@ const userData = userSnap.data() as any; // 🔥 TS ko bypass karne ke liye
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================== Institutional Safety & Ethics Section */}
+        <section id="safety" className="w-full py-8 sm:py-12 bg-transparent">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="rounded-3xl border border-white/80 bg-white/70 backdrop-blur-xl p-6 sm:p-10 lg:p-12 shadow-xl shadow-navy-950/5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-navy-900/10">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-teal-900">
+                    INSTITUTIONAL SAFETY &amp; ETHICS
+                  </p>
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-navy-950 tracking-tight leading-tight">
+                    Your data stays yours. Period.
+                  </h2>
+                </div>
+                <div className="shrink-0">
+                  <Link
+                    href="/register-as-peer"
+                    className="inline-flex items-center justify-center px-6 py-3.5 rounded-2xl bg-[#0f4b40] hover:bg-[#0b3b32] text-white font-bold text-sm sm:text-base shadow-sm transition-all text-center active:scale-98 cursor-pointer"
+                  >
+                    Join as Peer Supporter →
+                  </Link>
+                </div>
+              </div>
+
+              {/* Three Institutional Guarantees */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-8">
+                <div className="space-y-2">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-lg shadow-2xs">
+                    🛡️
+                  </div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950">
+                    Zero Surveillance &amp; Tracking
+                  </h3>
+                  <p className="text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">
+                    No analytics pixels, behavioral tracking, or identity logging. Students participate under pseudonyms with absolute peace of mind.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-950 text-lg shadow-2xs">
+                    🔒
+                  </div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950">
+                    Local Device Storage
+                  </h3>
+                  <p className="text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">
+                    Private journals and mood logs stay encrypted strictly on your personal device. Nothing is sent to servers without explicit consent.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-lg shadow-2xs">
+                    🤝
+                  </div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950">
+                    Human-Led Decisions
+                  </h3>
+                  <p className="text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">
+                    AI only powers supportive coping guides and check-in trends. All care, moderation, and escalations are conducted by real counsellors.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
