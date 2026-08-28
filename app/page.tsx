@@ -20,7 +20,7 @@ export default function LandingPage() {
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
       >
         <Image
-          src="/images/hero-campus.jpg"
+          src="/images/my-hero-campus.jpg"
           alt="Campus Sunrise Pathway"
           fill
           priority
