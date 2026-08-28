@@ -259,10 +259,10 @@ type StudentTab = {
 function getStudentTabs(supportMode: string): StudentTab[] {
   const tabs = [
     { href: "/student/home", label: "Home", icon: "🏠" },
+    { href: "/student/accounts", label: "My Accounts", icon: "👤" }, // 🔥 NAYA LINK YAHAN ADD HUA HAI
     { href: "/student/community", label: "Community", icon: "💬" },
     { href: "/student/journal", label: "Journal", icon: "📓" },
   ];
-
   if (supportMode === "supporting") {
     tabs.push({ href: "/student/peer", label: "Peer Hub", icon: "🫂" });
     tabs.push({ href: "/student/leaderboard", label: "Leaderboard", icon: "🏆" });
