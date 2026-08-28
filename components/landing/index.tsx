@@ -154,11 +154,6 @@ export function LandingFooter() {
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
               Privacy-first mental health support system for higher education institutions. Providing students with secure peer support and consent-driven professional counselling.
             </p>
-            <div className="pt-2">
-              <span className="inline-block rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-slate-300 border border-slate-800">
-                🏛️ SIH Problem Statement SW-55
-              </span>
-            </div>
           </div>
 
           {/* Column 2: Student Portals (Col 2) */}
@@ -242,7 +237,7 @@ export function LandingFooter() {
 
         {/* Bottom Bar: Copyright, Institution note */}
         <div className="border-t border-slate-800/80 mt-14 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <p>© {new Date().getFullYear()} MindEase · Built with care by Team PsychOps</p>
+          <p>Built with care by Team PsychOps</p>
           <p className="text-center sm:text-right text-slate-400 max-w-md">
             Emergency contacts and counselling resources are institution-configured for student safety.
           </p>

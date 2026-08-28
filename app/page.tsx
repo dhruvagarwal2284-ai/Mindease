@@ -104,7 +104,22 @@ const userData = userSnap.data() as any; // 🔥 TS ko bypass karne ke liye
           className="object-cover object-center md:object-[center_right]"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/40 to-transparent sm:via-white/20 lg:from-white/80 lg:via-transparent" />
+        {/* Left-side fade: 70% opacity wash fading out completely before right side */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to right, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.35) 30%, rgba(255, 255, 255, 0) 65%)",
+          }}
+        />
+        {/* Downside fade: 40% opacity wash */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(255, 255, 255, 0.40) 0%, rgba(255, 255, 255, 0.20) 35%, rgba(255, 255, 255, 0) 75%)",
+          }}
+        />
       </div>
 
       <div className="relative z-10 flex-1 w-full bg-transparent">
@@ -169,17 +184,73 @@ const userData = userSnap.data() as any; // 🔥 TS ko bypass karne ke liye
                   </Link>
                 </div>
 
-                {/* Trust Indicators: Rounded Pill Badges */}
+                {/* Trust Indicators with Distinct Outline Icons */}
                 <div className="pt-2 flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/85 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
+                    <svg
+                      className="w-4 h-4 text-teal-800 shrink-0"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
                     100% Client-Side Data
                   </span>
-                  <span className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/85 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
+                    <svg
+                      className="w-4 h-4 text-teal-800 shrink-0"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
                     Anonymous Pseudonyms
                   </span>
-                  <span className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/85 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
+                    <svg
+                      className="w-4 h-4 text-teal-800 shrink-0"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                      <line x1="12" y1="18" x2="12.01" y2="18" strokeWidth="2.5" />
+                    </svg>
                     Zero Tracking
                   </span>
+                </div>
+              </div>
+
+              {/* Right Column: Floating Design Intent Card with Shake-on-Hover over Hostel Building */}
+              <div className="lg:col-span-4 hidden lg:flex justify-end animate-fade-up">
+                <div className="rounded-3xl border border-white/85 bg-white/75 backdrop-blur-xl p-6 sm:p-7 shadow-xl shadow-navy-950/10 max-w-sm space-y-3.5 cursor-pointer animate-hover-shake select-none group">
+                  <div className="flex items-center gap-2 text-xs font-black text-teal-800 tracking-wider uppercase">
+                    <span className="h-2 w-2 rounded-full bg-teal-600 shrink-0" />
+                    DESIGN INTENT
+                  </div>
+                  <p className="text-sm sm:text-base font-semibold text-navy-950 italic leading-relaxed">
+                    &ldquo;When exam weeks got overwhelming, being able to chat without worrying about anyone finding out made all the difference.&rdquo;
+                  </p>
+                  <div className="border-t border-navy-900/10 pt-3">
+                    <p className="text-xs font-bold text-navy-800">
+                      The kind of student experience we are building for.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -189,126 +260,72 @@ const userData = userSnap.data() as any; // 🔥 TS ko bypass karne ke liye
         <section id="features" className="w-full pt-2 pb-12 sm:pt-4 sm:pb-16 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
-              <p className="text-xs font-extrabold uppercase tracking-wider text-teal-900">
+              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-white/40 shadow-[0_2px_12px_rgba(0,0,0,0.08)] text-xs sm:text-[13px] font-bold uppercase tracking-[0.05em] text-teal-900">
+                <span className="h-2 w-2 rounded-full bg-teal-600 shrink-0" />
                 Core Capabilities
-              </p>
-              <h2 className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-black text-navy-950 tracking-tight leading-tight">
+              </div>
+              <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-black text-navy-950 tracking-tight leading-tight">
                 Care that respects your privacy from day one
               </h2>
+              <p className="mt-3 text-sm sm:text-base lg:text-lg text-navy-900 font-medium leading-relaxed max-w-xl mx-auto">
+                Every tool is designed to let you choose what to share, when to reach out, and who to connect with.
+              </p>
             </div>
 
-            {/* 2x2 Grid Layout: 2 cards per row, 2 rows */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-              {FEATURES.map((feat) => (
-                <div
-                  key={feat.title}
-                  className="relative rounded-3xl border border-white/80 bg-white/65 backdrop-blur-xl p-6 sm:p-8 shadow-lg shadow-navy-950/5 transition-all duration-300 hover:-translate-y-1.5 hover:bg-white/80 hover:shadow-xl hover:border-white flex flex-col justify-between group overflow-hidden"
-                >
-                  <div>
-                    {/* Top Row: Left Pill Badge & Top-Right Illustration Graphic */}
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div
-                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-bold shadow-2xs ${feat.badgeTone}`}
-                      >
-                        {feat.badge}
+            {/* Asymmetric 2x2 Bento Grid: Alternating Wide (7 cols / 1.4x) and Narrow (5 cols / 1.0x) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
+              {FEATURES.map((feat, idx) => {
+                const isWide = idx === 0 || idx === 3;
+                return (
+                  <div
+                    key={feat.title}
+                    className={`relative rounded-3xl border border-white/80 bg-white/65 backdrop-blur-xl p-6 sm:p-8 shadow-lg shadow-navy-950/5 transition-all duration-300 hover:-translate-y-1.5 hover:bg-white/80 hover:shadow-xl hover:border-white flex flex-col justify-between h-full group overflow-hidden ${
+                      isWide ? "md:col-span-7" : "md:col-span-5"
+                    }`}
+                  >
+                    <div>
+                      {/* Top Row: Left Pill Badge & Top-Right Illustration Graphic */}
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-bold shadow-2xs ${feat.badgeTone}`}
+                        >
+                          {feat.badge}
+                        </div>
+                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 -mt-1 -mr-1">
+                          <Image
+                            src={feat.image}
+                            alt={feat.title}
+                            width={80}
+                            height={80}
+                            className="object-contain w-full h-full"
+                          />
+                        </div>
                       </div>
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 -mt-1 -mr-1">
-                        <Image
-                          src={feat.image}
-                          alt={feat.title}
-                          width={80}
-                          height={80}
-                          className="object-contain w-full h-full"
-                        />
-                      </div>
+
+                      <h3 className="text-xl sm:text-2xl font-black text-navy-950 tracking-tight">
+                        {feat.title}
+                      </h3>
+                      <p className="mt-2 text-sm sm:text-base text-navy-800 leading-relaxed font-normal">
+                        {feat.description}
+                      </p>
                     </div>
 
-                    <h3 className="text-xl sm:text-2xl font-black text-navy-950 tracking-tight">
-                      {feat.title}
-                    </h3>
-                    <p className="mt-2 text-sm sm:text-base text-navy-800 leading-relaxed font-normal">
-                      {feat.description}
-                    </p>
+                    <div className="mt-6 pt-4 border-t border-navy-900/10">
+                      <Link
+                        href={feat.link}
+                        className="inline-flex items-center text-xs sm:text-sm font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
+                      >
+                        {feat.linkText} <span aria-hidden>→</span>
+                      </Link>
+                    </div>
                   </div>
-
-                  <div className="mt-6 pt-4 border-t border-navy-900/10">
-                    <Link
-                      href={feat.link}
-                      className="inline-flex items-center text-xs sm:text-sm font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
-                    >
-                      {feat.linkText} <span aria-hidden>→</span>
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
 
-        {/* ============================================== Institutional Safety & Ethics Section */}
-        <section id="safety" className="w-full py-8 sm:py-12 bg-transparent">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="rounded-3xl border border-white/80 bg-white/70 backdrop-blur-xl p-6 sm:p-10 lg:p-12 shadow-xl shadow-navy-950/5">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-navy-900/10">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-teal-900">
-                    INSTITUTIONAL SAFETY &amp; ETHICS
-                  </p>
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-navy-950 tracking-tight leading-tight">
-                    Your data stays yours. Period.
-                  </h2>
-                </div>
-                <div className="shrink-0">
-                  <Link
-                    href="/register-as-peer"
-                    className="inline-flex items-center justify-center px-6 py-3.5 rounded-2xl bg-[#0f4b40] hover:bg-[#0b3b32] text-white font-bold text-sm sm:text-base shadow-sm transition-all text-center active:scale-98 cursor-pointer"
-                  >
-                    Join as Peer Supporter →
-                  </Link>
-                </div>
-              </div>
 
-              {/* Three Institutional Guarantees */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-8">
-                <div className="space-y-2">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-lg shadow-2xs">
-                    🛡️
-                  </div>
-                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950">
-                    Zero Surveillance &amp; Tracking
-                  </h3>
-                  <p className="text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">
-                    No analytics pixels, behavioral tracking, or identity logging. Students participate under pseudonyms with absolute peace of mind.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-950 text-lg shadow-2xs">
-                    🔒
-                  </div>
-                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950">
-                    Local Device Storage
-                  </h3>
-                  <p className="text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">
-                    Private journals and mood logs stay encrypted strictly on your personal device. Nothing is sent to servers without explicit consent.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-lg shadow-2xs">
-                    🤝
-                  </div>
-                  <h3 className="text-base sm:text-lg font-extrabold text-navy-950">
-                    Human-Led Decisions
-                  </h3>
-                  <p className="text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">
-                    AI only powers supportive coping guides and check-in trends. All care, moderation, and escalations are conducted by real counsellors.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* -------------------------------------------------- Pre-Footer Quote Bridge */}
         <section className="w-full bg-slate-900 py-3.5 sm:py-4.5 text-slate-300">

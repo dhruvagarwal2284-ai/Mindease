@@ -156,6 +156,39 @@ html[data-motion="reduced"] *::after {
   animation: me-pulse-soft 1.6s ease-in-out infinite;
 }
 
+@keyframes me-gentle-shake {
+  0% {
+    transform: rotate(0deg) translateY(0) scale(1);
+  }
+  20% {
+    transform: rotate(-0.6deg) translateY(-1px) scale(1.008);
+  }
+  40% {
+    transform: rotate(0.6deg) translateY(-1.5px) scale(1.01);
+  }
+  60% {
+    transform: rotate(-0.3deg) translateY(-1.5px) scale(1.01);
+  }
+  80% {
+    transform: rotate(0.2deg) translateY(-1px) scale(1.008);
+  }
+  100% {
+    transform: rotate(0deg) translateY(-1px) scale(1.008);
+  }
+}
+
+.animate-hover-shake {
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.animate-hover-shake:hover {
+  animation: me-gentle-shake 0.45s ease-in-out;
+  transform: translateY(-2px) scale(1.008);
+}
+
+
+
+
 /* Print: the counsellor screens are occasionally printed for case files. */
 @media print {
   .no-print {
