@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cinzel } from "next/font/google";
+import { Cinzel, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import { LockScreen } from "@/components/privacy";
 import { Toaster } from "@/components/ui";
@@ -8,19 +8,55 @@ import fs from "node:fs";
 import path from "node:path";
 import "./globals.css";
 
-// Sync latest uploaded logo asset to public directories
+// Sync uploaded hero background and feature illustrations
 try {
-  const src =
-    "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787773964767.png";
   const destDir = path.join(process.cwd(), "public", "images");
+  const featDir = path.join(destDir, "features");
   if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
-  if (fs.existsSync(src)) {
-    fs.copyFileSync(src, path.join(destDir, "mindease-logo.png"));
-    fs.copyFileSync(src, path.join(process.cwd(), "public", "logo.png"));
+  if (!fs.existsSync(featDir)) fs.mkdirSync(featDir, { recursive: true });
+
+  const uploads = [
+    {
+      src: "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787917028392.jpg",
+      dest: path.join(destDir, "hero-campus.jpg"),
+    },
+    {
+      src: "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787857199887.png",
+      dest: path.join(featDir, "peer-chat.png"),
+    },
+    {
+      src: "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787857199912.png",
+      dest: path.join(featDir, "journal.png"),
+    },
+    {
+      src: "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787857199991.png",
+      dest: path.join(featDir, "resources.png"),
+    },
+    {
+      src: "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787857199872.png",
+      dest: path.join(featDir, "counselling.png"),
+    },
+    {
+      src: "C:/Users/anshu/.gemini/antigravity/brain/3853ad4b-35cf-46be-895e-266a4d1f35d4/.user_uploaded/media_1787773964767.png",
+      dest: path.join(destDir, "mindease-logo.png"),
+    },
+  ];
+
+  for (const item of uploads) {
+    if (fs.existsSync(item.src)) {
+      fs.copyFileSync(item.src, item.dest);
+    }
   }
 } catch {
   // fallback if already present
 }
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -48,7 +84,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cinzel.variable}
+      className={`${plusJakarta.variable} ${cinzel.variable}`}
       data-theme="ocean"
       data-contrast="normal"
       data-motion="full"
