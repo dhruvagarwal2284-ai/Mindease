@@ -134,7 +134,7 @@ export default function LandingPage() {
         </section>
 
         {/* -------------------------------------------------- Core Capabilities Section */}
-        <section id="features" className="w-full pt-6 pb-12 sm:pt-10 sm:pb-16 bg-transparent">
+        <section id="features" className="w-full pt-6 pb-14 sm:pt-10 sm:pb-20 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             {/* Section Header: Pure Floating Typography */}
             <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
@@ -322,69 +322,24 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* -------------------------------------------------- Pre-Footer Bridge Section */}
-        <section className="w-full pb-16 sm:pb-24 pt-4 bg-transparent">
+        {/* -------------------------------------------------- Pre-Footer Quote Bridge */}
+        <section className="w-full bg-slate-900 py-3.5 sm:py-4.5 text-slate-300">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="relative rounded-3xl border border-white/90 bg-gradient-to-br from-white/85 via-white/70 to-teal-50/60 backdrop-blur-2xl p-8 sm:p-12 lg:p-14 shadow-2xl shadow-navy-950/10 overflow-hidden">
-              {/* Decorative Subtle Background Accents */}
-              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-teal-200/30 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-64 h-64 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="relative z-10 max-w-3xl mx-auto text-center space-y-5">
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-teal-200/90 text-xs font-bold text-[#0e5043] shadow-2xs">
-                  <span className="h-2 w-2 rounded-full bg-teal-600 animate-pulse-soft" />
-                  Free &amp; Completely Confidential
-                </span>
-
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-navy-950 tracking-tight leading-tight">
-                  A quiet space is always open when you need it.
-                </h2>
-
-                <p className="text-sm sm:text-base lg:text-lg text-navy-800/95 font-medium leading-relaxed max-w-2xl mx-auto">
-                  No signups, no email verification, and no trace. Start an anonymous peer chat, write in your private journal, or access campus care on your own schedule.
-                </p>
-
-                {/* Primary Action Button Grid */}
-                <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-                  <Link
-                    href={studentDestination}
-                    className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#0f4b40] hover:bg-[#0b3b32] text-white font-bold text-base sm:text-lg shadow-sm transition-all text-center active:scale-98"
-                  >
-                    {ready && state.onboarded ? "Continue as Student →" : "Enter as Student →"}
-                  </Link>
-                  <Link
-                    href="/student/support"
-                    className="w-full sm:w-auto inline-flex items-center justify-center px-7 py-4 rounded-2xl bg-white/90 hover:bg-white text-navy-950 font-bold text-base border border-navy-200/90 shadow-sm transition-all text-center active:scale-98"
-                  >
-                    Browse Campus Resources
-                  </Link>
-                  <Link
-                    href="/register-as-peer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-4 rounded-2xl bg-teal-50/80 hover:bg-teal-100/90 text-teal-950 font-bold text-base border border-teal-200/80 shadow-2xs transition-all text-center active:scale-98"
-                  >
-                    Become a Peer Supporter
-                  </Link>
-                </div>
-
-                {/* Micro Assurance Indicators */}
-                <div className="pt-4 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs sm:text-sm font-semibold text-navy-800/80">
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-teal-700 font-bold">✓</span> 100% Client-Side
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-teal-700 font-bold">✓</span> Zero Tracking
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-teal-700 font-bold">✓</span> Instant Pseudonyms
-                  </span>
-                </div>
-              </div>
+            <hr className="border-slate-800/60 mb-3 sm:mb-3.5" />
+            <div className="max-w-xl mx-auto text-center space-y-1">
+              <p className="text-xs sm:text-sm font-medium text-teal-200/90 italic leading-normal">
+                &ldquo;You don’t have to carry everything all at once. Sometimes taking a moment to pause, reflect, and reach out is the strongest thing you can do.&rdquo;
+              </p>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                — A safe space, whenever you need it
+              </p>
             </div>
+            <hr className="border-slate-800/60 mt-3 sm:mt-3.5" />
           </div>
         </section>
       </div>
 
-      {/* 4. Footer sits in normal document flow and smoothly anchors the page */}
+      {/* 4. Footer sits in normal document flow and anchors the page */}
       <LandingFooter />
     </div>
   );
