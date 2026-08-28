@@ -14,22 +14,24 @@ export default function LandingPage() {
       {/* 1. Header (Sticky with crisis banner, logo, navigation links, Register CTA) */}
       <LandingHeader />
 
-      {/* 2. Truly Fixed Viewport Background (Pinned sunny campus lawn) */}
+      {/* 2. Truly Fixed Viewport Background (Pinned sunny campus lawn with reduced right-side fade) */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
       >
         <Image
           src="/images/hero-campus.jpg"
-          alt="Campus Lawn and Students"
+          alt="Campus Sunrise Pathway"
           fill
           priority
           quality={100}
-          className="object-cover object-right md:object-[center_right]"
+          className="object-cover object-center md:object-[center_right]"
           sizes="100vw"
         />
-        {/* Soft gradient wash on left for copy readability and contrast */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/75 to-transparent sm:via-white/50 lg:from-white/90 lg:via-white/30 lg:to-transparent" />
+        {/* Horizontal contrast wash focused cleanly on left side (right side fade reduced by 10%) */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/55 to-transparent sm:via-white/35 sm:to-transparent lg:from-white/85 lg:via-white/20 lg:to-transparent" />
+        {/* Soft bottom diffusion */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white/60" />
       </div>
 
       {/* 3. Main Content Container (scrolls cleanly over fixed background) */}
@@ -39,117 +41,82 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               {/* Left Column: Headline, Subcopy, Action CTAs & Trust Badges */}
-              <div className="lg:col-span-8 space-y-4 sm:space-y-5 animate-fade-up">
+              <div className="lg:col-span-8 space-y-5 animate-fade-up">
                 {/* Top Pill Badge */}
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-200 bg-white/85 backdrop-blur-md shadow-2xs text-xs font-bold text-teal-950">
-                  <span className="h-2 w-2 rounded-full bg-teal-600 animate-pulse-soft" />
+                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-teal-200/90 bg-white/85 backdrop-blur-xl shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
+                  <span className="h-2.5 w-2.5 rounded-full bg-teal-600 shrink-0" />
                   Anonymous Student Support
                 </div>
 
-                {/* Main Headline with Hand-Drawn Squiggle Underline Accent */}
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-navy-950 leading-[1.12]">
-                  Support you can reach{" "}
-                  <span className="relative inline-block text-teal-800">
+                {/* Main Headline with Hand-Drawn Rough/Human Underline */}
+                <h1 className="text-4xl sm:text-5xl lg:text-[4.2rem] font-black tracking-tight text-navy-950 leading-[1.04] sm:leading-[1.02]">
+                  Support you can<br />
+                  reach<br />
+                  <span className="relative inline-block text-[#0e5043] pb-3">
                     on your terms.
                     <svg
-                      className="absolute -bottom-1.5 left-0 w-full h-2 text-teal-500/80"
-                      viewBox="0 0 120 8"
+                      className="absolute -bottom-1 left-0 w-full h-3.5 text-[#0e5043] overflow-visible"
+                      viewBox="0 0 250 14"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
                       preserveAspectRatio="none"
                       aria-hidden="true"
                     >
+                      {/* Main hand-drawn rough stroke with organic taper */}
                       <path
-                        d="M2 5C25 1.5 55 6.5 85 3C100 1.2 110 4.5 118 4"
+                        d="M3 8.5C38 3.5 95 11.5 152 5C188 1.5 224 8 247 6.5C215 9.5 145 12 78 10C38 8.8 12 7 4 9.5"
+                        fill="currentColor"
+                      />
+                      {/* Secondary rough sketchy undertone */}
+                      <path
+                        d="M18 11.5C65 7 140 12.5 210 8.5C232 7.2 244 8.5 248 9"
                         stroke="currentColor"
-                        strokeWidth="2.5"
+                        strokeWidth="1.8"
                         strokeLinecap="round"
+                        opacity="0.85"
                       />
                     </svg>
                   </span>
                 </h1>
 
-                {/* Honest & Factual Subcopy */}
-                <p className="text-sm sm:text-base lg:text-lg text-navy-900 font-medium leading-relaxed bg-white/60 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none p-3 sm:p-0 rounded-2xl max-w-2xl">
+                {/* Subcopy */}
+                <p className="text-sm sm:text-base lg:text-lg text-navy-900 font-medium leading-relaxed max-w-2xl bg-white/40 sm:bg-transparent backdrop-blur-xs sm:backdrop-blur-none p-2 sm:p-0 rounded-xl">
                   MindEase provides university students with anonymous peer chat, a private journal that stays on your device, and a consent-first counsellor pathway that only opens when you choose to open it.
                 </p>
 
                 {/* Action Buttons Group */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                <div className="flex flex-col sm:flex-row gap-4 pt-2">
                   <Link
                     href={studentDestination}
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-bold text-sm sm:text-base shadow-xs transition-all text-center active:scale-98"
+                    className="inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#0f4b40] hover:bg-[#0b3b32] text-white font-bold text-base sm:text-lg shadow-sm transition-all text-center active:scale-98"
                   >
                     {ready && state.onboarded ? "Continue as Student →" : "Enter as Student →"}
                   </Link>
                   <Link
                     href="/counsellor/dashboard"
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white/80 hover:bg-white backdrop-blur-sm text-navy-950 font-bold text-sm sm:text-base border border-navy-200 shadow-2xs transition-all text-center active:scale-98"
+                    className="inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-white/90 hover:bg-white text-navy-950 font-bold text-base sm:text-lg border border-navy-200/90 shadow-sm transition-all text-center active:scale-98 backdrop-blur-md"
                   >
                     Counsellor Platform
                   </Link>
                 </div>
 
-                {/* Trust Indicators with Distinct SVG Icons */}
-                <div className="pt-2 flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-navy-950 font-bold">
-                  {/* Shield / Client-Side */}
-                  <span className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/80 shadow-2xs">
-                    <svg
-                      className="w-3.5 h-3.5 text-teal-700 shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
+                {/* Trust Indicators: Rounded Pill Badges */}
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/85 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
                     100% Client-Side Data
                   </span>
-
-                  {/* Eye-Off / Anonymous */}
-                  <span className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/80 shadow-2xs">
-                    <svg
-                      className="w-3.5 h-3.5 text-teal-700 shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
+                  <span className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/85 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
                     Anonymous Pseudonyms
                   </span>
-
-                  {/* Device / Zero Tracking */}
-                  <span className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/80 shadow-2xs">
-                    <svg
-                      className="w-3.5 h-3.5 text-teal-700 shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-                      <line x1="12" y1="18" x2="12.01" y2="18" strokeWidth="3" />
-                    </svg>
+                  <span className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/85 backdrop-blur-xl border border-white/90 shadow-2xs text-xs sm:text-sm font-bold text-navy-950">
                     Zero Tracking
                   </span>
                 </div>
               </div>
 
-              {/* Right Column: Subtle Illustrative Feedback Card (Deliberate Asymmetric Touch) */}
+              {/* Right Column: Subtle Illustrative Feedback Card */}
               <div className="lg:col-span-4 hidden lg:flex justify-end">
-                <div className="rounded-3xl border border-white/90 bg-white/75 backdrop-blur-xl p-5 shadow-xl shadow-navy-950/10 max-w-sm space-y-3 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                <div className="rounded-3xl border border-white/90 bg-white/70 backdrop-blur-2xl p-5 sm:p-6 shadow-xl shadow-navy-950/10 max-w-sm space-y-3 transform rotate-1 hover:rotate-0 transition-transform duration-300">
                   <div className="flex items-center gap-2 text-xs font-bold text-teal-900 tracking-wide uppercase">
                     <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
                     Design Intent
@@ -157,8 +124,8 @@ export default function LandingPage() {
                   <p className="text-sm font-medium text-navy-900 italic leading-relaxed">
                     &ldquo;When exam weeks got overwhelming, being able to chat without worrying about anyone finding out made all the difference.&rdquo;
                   </p>
-                  <p className="text-[11px] font-semibold text-navy-600 border-t border-navy-100 pt-2">
-                    The kind of student experience we are building for.
+                  <p className="text-[11px] font-semibold tracking-wide text-navy-600 uppercase border-t border-navy-100/80 pt-2">
+                    The kind of student experience we are building for
                   </p>
                 </div>
               </div>
@@ -166,29 +133,29 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* -------------------------------------------------- Core Capabilities Section (Organic Pattern Layout) */}
-        <section id="features" className="w-full pt-4 pb-14 sm:pt-6 sm:pb-20 bg-transparent">
+        {/* -------------------------------------------------- Core Capabilities Section */}
+        <section id="features" className="w-full pt-6 pb-12 sm:pt-10 sm:pb-16 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            {/* Plain, Human, Non-Corporate Section Header */}
-            <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-              <p className="text-xs font-extrabold uppercase tracking-wider text-teal-900 [text-shadow:_0_1px_1px_rgb(255_255_255_/_80%)]">
+            {/* Section Header: Pure Floating Typography */}
+            <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+              <p className="text-xs sm:text-sm font-black uppercase tracking-widest text-[#0e5043] drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]">
                 How MindEase works
               </p>
-              <h2 className="mt-1.5 text-2xl sm:text-3xl lg:text-3.5xl font-extrabold text-navy-950 tracking-tight [text-shadow:_0_1px_2px_rgb(255_255_255_/_60%)]">
+              <h2 className="mt-2 text-3xl sm:text-4xl lg:text-5xl font-black text-navy-950 tracking-tight leading-tight drop-shadow-[0_1px_4px_rgba(255,255,255,0.85)]">
                 Care that respects your privacy from day one
               </h2>
-              <p className="mt-2 text-xs sm:text-sm text-navy-900 font-medium leading-relaxed [text-shadow:_0_1px_1px_rgb(255_255_255_/_80%)]">
+              <p className="mt-3 text-sm sm:text-base lg:text-lg text-navy-800/95 font-medium leading-relaxed max-w-2xl mx-auto drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]">
                 Every tool is designed to let you choose what to share, when to reach out, and who to connect with.
               </p>
             </div>
 
-            {/* Asymmetric, Staggered Bento Cards with Hand-Crafted Personality */}
+            {/* Rich Glassmorphic Bento Cards over Background */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start">
-              {/* Card 1: Anonymous Peer Chat (Col 7: Prominent, live feel) */}
-              <div className="md:col-span-7 rounded-3xl border border-white/80 bg-white/70 backdrop-blur-xl p-6 sm:p-7 shadow-lg shadow-navy-950/5 transition-all duration-300 hover:bg-white/85 hover:shadow-xl hover:border-teal-200/90 group flex flex-col justify-between min-h-[260px] lg:min-h-[290px] relative overflow-hidden">
+              {/* Card 1: Anonymous Peer Chat (Col 7) */}
+              <div className="md:col-span-7 rounded-3xl border border-white/80 bg-white/60 backdrop-blur-2xl backdrop-saturate-150 p-6 sm:p-7 shadow-xl shadow-navy-950/5 transition-all duration-300 hover:bg-white/75 hover:shadow-2xl hover:border-white group flex flex-col justify-between min-h-[260px] lg:min-h-[290px] relative overflow-hidden">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-[11px] font-bold text-teal-900 shadow-2xs">
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 border border-teal-200/90 text-xs font-bold text-teal-950 shadow-2xs backdrop-blur-md">
                       <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse-soft" />
                       Live 1:1 · Ephemeral
                     </span>
@@ -203,7 +170,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-extrabold text-navy-950 tracking-tight">
+                    <h3 className="text-lg sm:text-xl font-bold text-navy-950 tracking-tight">
                       Anonymous Peer Chat
                     </h3>
                     <p className="mt-2 text-xs sm:text-sm text-navy-800 leading-relaxed font-normal max-w-lg">
@@ -214,18 +181,18 @@ export default function LandingPage() {
                 <div className="mt-5 pt-3.5 border-t border-navy-900/10">
                   <Link
                     href="/student/peer"
-                    className="inline-flex items-center text-xs font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
+                    className="inline-flex items-center text-xs sm:text-sm font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
                   >
                     Try Peer Chat <span aria-hidden>→</span>
                   </Link>
                 </div>
               </div>
 
-              {/* Card 2: Private Local Journal (Col 5: Staggered taller offset) */}
-              <div className="md:col-span-5 rounded-3xl border border-white/80 bg-white/70 backdrop-blur-xl p-6 sm:p-7 shadow-lg shadow-navy-950/5 transition-all duration-300 hover:bg-white/85 hover:shadow-xl hover:border-indigo-200/90 group flex flex-col justify-between min-h-[260px] lg:min-h-[290px] lg:translate-y-2 relative overflow-hidden">
+              {/* Card 2: Private Local Journal (Col 5) */}
+              <div className="md:col-span-5 rounded-3xl border border-white/80 bg-white/60 backdrop-blur-2xl backdrop-saturate-150 p-6 sm:p-7 shadow-xl shadow-navy-950/5 transition-all duration-300 hover:bg-white/75 hover:shadow-2xl hover:border-white group flex flex-col justify-between min-h-[260px] lg:min-h-[290px] lg:translate-y-2 relative overflow-hidden">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/80 text-[11px] font-bold text-indigo-900 shadow-2xs">
+                    <span className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-white/80 border border-indigo-200/90 text-xs font-bold text-indigo-950 shadow-2xs backdrop-blur-md">
                       🔒 Device-Only Storage
                     </span>
                     <div className="relative w-13 h-13 sm:w-15 sm:h-15 shrink-0 transition-transform duration-300 group-hover:scale-105">
@@ -239,7 +206,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-extrabold text-navy-950 tracking-tight">
+                    <h3 className="text-lg sm:text-xl font-bold text-navy-950 tracking-tight">
                       Private Local Journal
                     </h3>
                     <p className="mt-2 text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">
@@ -250,18 +217,18 @@ export default function LandingPage() {
                 <div className="mt-5 pt-3.5 border-t border-navy-900/10">
                   <Link
                     href="/student/journal"
-                    className="inline-flex items-center text-xs font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
+                    className="inline-flex items-center text-xs sm:text-sm font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
                   >
                     Open Journal <span aria-hidden>→</span>
                   </Link>
                 </div>
               </div>
 
-              {/* Card 3: AI Support & Resources (Col 5: Grounding topics tags) */}
-              <div className="md:col-span-5 rounded-3xl border border-white/80 bg-white/70 backdrop-blur-xl p-6 sm:p-7 shadow-lg shadow-navy-950/5 transition-all duration-300 hover:bg-white/85 hover:shadow-xl hover:border-amber-200/90 group flex flex-col justify-between min-h-[260px] lg:min-h-[290px] relative overflow-hidden">
+              {/* Card 3: AI Support & Resources (Col 5) */}
+              <div className="md:col-span-5 rounded-3xl border border-white/80 bg-white/60 backdrop-blur-2xl backdrop-saturate-150 p-6 sm:p-7 shadow-xl shadow-navy-950/5 transition-all duration-300 hover:bg-white/75 hover:shadow-2xl hover:border-white group flex flex-col justify-between min-h-[260px] lg:min-h-[290px] relative overflow-hidden">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-[11px] font-bold text-amber-900 shadow-2xs">
+                    <span className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-white/80 border border-amber-200/90 text-xs font-bold text-amber-950 shadow-2xs backdrop-blur-md">
                       🌱 Self-Paced Guides
                     </span>
                     <div className="relative w-13 h-13 sm:w-15 sm:h-15 shrink-0 transition-transform duration-300 group-hover:scale-105">
@@ -275,7 +242,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-extrabold text-navy-950 tracking-tight">
+                    <h3 className="text-lg sm:text-xl font-bold text-navy-950 tracking-tight">
                       AI Support &amp; Resources
                     </h3>
                     <p className="mt-2 text-xs sm:text-sm text-navy-800 leading-relaxed font-normal">
@@ -286,18 +253,18 @@ export default function LandingPage() {
                 <div className="mt-5 pt-3.5 border-t border-navy-900/10">
                   <Link
                     href="/student/support"
-                    className="inline-flex items-center text-xs font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
+                    className="inline-flex items-center text-xs sm:text-sm font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
                   >
                     Browse Library <span aria-hidden>→</span>
                   </Link>
                 </div>
               </div>
 
-              {/* Card 4: Consent-First Counselling (Col 7: Warm wide card) */}
-              <div className="md:col-span-7 rounded-3xl border border-white/80 bg-white/70 backdrop-blur-xl p-6 sm:p-7 shadow-lg shadow-navy-950/5 transition-all duration-300 hover:bg-white/85 hover:shadow-xl hover:border-emerald-200/90 group flex flex-col justify-between min-h-[260px] lg:min-h-[290px] relative overflow-hidden">
+              {/* Card 4: Consent-First Counselling (Col 7) */}
+              <div className="md:col-span-7 rounded-3xl border border-white/80 bg-white/60 backdrop-blur-2xl backdrop-saturate-150 p-6 sm:p-7 shadow-xl shadow-navy-950/5 transition-all duration-300 hover:bg-white/75 hover:shadow-2xl hover:border-white group flex flex-col justify-between min-h-[260px] lg:min-h-[290px] relative overflow-hidden">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold text-emerald-900 shadow-2xs">
+                    <span className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-white/80 border border-emerald-200/90 text-xs font-bold text-emerald-950 shadow-2xs backdrop-blur-md">
                       🤝 Direct Campus Pathway
                     </span>
                     <div className="relative w-15 h-15 sm:w-18 sm:h-18 shrink-0 transition-transform duration-300 group-hover:scale-105">
@@ -311,7 +278,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-extrabold text-navy-950 tracking-tight">
+                    <h3 className="text-lg sm:text-xl font-bold text-navy-950 tracking-tight">
                       Consent-First Counselling
                     </h3>
                     <p className="mt-2 text-xs sm:text-sm text-navy-800 leading-relaxed font-normal max-w-lg">
@@ -322,7 +289,7 @@ export default function LandingPage() {
                 <div className="mt-5 pt-3.5 border-t border-navy-900/10">
                   <Link
                     href="/student/support/request"
-                    className="inline-flex items-center text-xs font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
+                    className="inline-flex items-center text-xs sm:text-sm font-bold text-teal-800 hover:text-teal-950 hover:underline gap-1.5"
                   >
                     Book Support <span aria-hidden>→</span>
                   </Link>
@@ -331,12 +298,12 @@ export default function LandingPage() {
             </div>
 
             {/* Wide Institutional Safety & Ethics Panel */}
-            <div className="mt-8 sm:mt-10 rounded-3xl border border-white/80 bg-white/70 backdrop-blur-xl p-6 sm:p-8 shadow-lg shadow-navy-950/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="mt-8 sm:mt-10 rounded-3xl border border-white/80 bg-white/60 backdrop-blur-2xl backdrop-saturate-150 p-6 sm:p-8 shadow-xl shadow-navy-950/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 transition-all duration-300 hover:bg-white/75 hover:border-white">
               <div className="space-y-1.5">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-teal-900">
+                <span className="text-xs font-black uppercase tracking-widest text-[#0e5043]">
                   Institutional Safety &amp; Ethics
                 </span>
-                <h3 className="text-lg sm:text-xl font-extrabold text-navy-950">
+                <h3 className="text-lg sm:text-xl font-bold text-navy-950 tracking-tight">
                   Your data stays yours. Period.
                 </h3>
                 <p className="text-xs sm:text-sm text-navy-800 max-w-2xl leading-relaxed font-normal">
@@ -354,9 +321,70 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* -------------------------------------------------- Pre-Footer Bridge Section */}
+        <section className="w-full pb-16 sm:pb-24 pt-4 bg-transparent">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="relative rounded-3xl border border-white/90 bg-gradient-to-br from-white/85 via-white/70 to-teal-50/60 backdrop-blur-2xl p-8 sm:p-12 lg:p-14 shadow-2xl shadow-navy-950/10 overflow-hidden">
+              {/* Decorative Subtle Background Accents */}
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-teal-200/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-64 h-64 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 max-w-3xl mx-auto text-center space-y-5">
+                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-teal-200/90 text-xs font-bold text-[#0e5043] shadow-2xs">
+                  <span className="h-2 w-2 rounded-full bg-teal-600 animate-pulse-soft" />
+                  Free &amp; Completely Confidential
+                </span>
+
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-navy-950 tracking-tight leading-tight">
+                  A quiet space is always open when you need it.
+                </h2>
+
+                <p className="text-sm sm:text-base lg:text-lg text-navy-800/95 font-medium leading-relaxed max-w-2xl mx-auto">
+                  No signups, no email verification, and no trace. Start an anonymous peer chat, write in your private journal, or access campus care on your own schedule.
+                </p>
+
+                {/* Primary Action Button Grid */}
+                <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3.5">
+                  <Link
+                    href={studentDestination}
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-[#0f4b40] hover:bg-[#0b3b32] text-white font-bold text-base sm:text-lg shadow-sm transition-all text-center active:scale-98"
+                  >
+                    {ready && state.onboarded ? "Continue as Student →" : "Enter as Student →"}
+                  </Link>
+                  <Link
+                    href="/student/support"
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-7 py-4 rounded-2xl bg-white/90 hover:bg-white text-navy-950 font-bold text-base border border-navy-200/90 shadow-sm transition-all text-center active:scale-98"
+                  >
+                    Browse Campus Resources
+                  </Link>
+                  <Link
+                    href="/register-as-peer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-4 rounded-2xl bg-teal-50/80 hover:bg-teal-100/90 text-teal-950 font-bold text-base border border-teal-200/80 shadow-2xs transition-all text-center active:scale-98"
+                  >
+                    Become a Peer Supporter
+                  </Link>
+                </div>
+
+                {/* Micro Assurance Indicators */}
+                <div className="pt-4 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs sm:text-sm font-semibold text-navy-800/80">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-teal-700 font-bold">✓</span> 100% Client-Side
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-teal-700 font-bold">✓</span> Zero Tracking
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-teal-700 font-bold">✓</span> Instant Pseudonyms
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* 4. Footer sits in normal document flow and covers the fixed background */}
+      {/* 4. Footer sits in normal document flow and smoothly anchors the page */}
       <LandingFooter />
     </div>
   );

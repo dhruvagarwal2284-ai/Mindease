@@ -96,31 +96,31 @@ export function LandingHeader({
         <nav aria-label="Main Navigation" className="hidden sm:flex items-center gap-1 md:gap-2">
           <Link
             href="/"
-            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
           >
             Home
           </Link>
           <Link
             href="/student/peer"
-            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
           >
             Peer Support
           </Link>
           <Link
             href="/student/journal"
-            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
           >
             Journal
           </Link>
           <Link
             href="/student/support"
-            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
           >
             Resources
           </Link>
           <Link
             href="/student/support/request"
-            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-navy-700 hover:text-teal-900 hover:bg-teal-50/70 transition-colors"
           >
             Counselling
           </Link>
@@ -142,62 +142,57 @@ export function LandingHeader({
 
 export function LandingFooter() {
   return (
-    <footer className="w-full bg-slate-900 text-slate-200 pt-14 pb-10 relative z-20 border-t border-slate-800">
+    <footer className="w-full bg-slate-950 text-slate-200 pt-16 pb-12 relative z-20 border-t border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-12">
-          {/* Column 1: Brand, Static Affirmative Statement & Description */}
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12">
+          {/* Column 1: Brand, Tagline & Mission (Col 4) */}
+          <div className="lg:col-span-4 space-y-4">
             <MindEaseLogo subtitle="Student Wellbeing" size="md" variant="light" />
-            <p className="text-sm text-teal-300 font-medium leading-relaxed">
+            <p className="text-sm text-teal-300 font-medium leading-relaxed max-w-sm">
               Support you can reach on your own terms, without giving up your privacy.
             </p>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
               Privacy-first mental health support system for higher education institutions. Providing students with secure peer support and consent-driven professional counselling.
             </p>
-            <div className="pt-1">
-              <span className="inline-block rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300 border border-slate-700">
-                SIH Problem Statement SW-55
+            <div className="pt-2">
+              <span className="inline-block rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-slate-300 border border-slate-800">
+                🏛️ SIH Problem Statement SW-55
               </span>
             </div>
           </div>
 
-          {/* Column 2: Student Links */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
-              Student Features
+          {/* Column 2: Student Portals (Col 2) */}
+          <div className="lg:col-span-2 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Student Space
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-300">
               <li>
                 <Link href="/onboarding" className="hover:text-teal-400 transition-colors">
-                  Student Onboarding
+                  Getting Started
                 </Link>
               </li>
               <li>
                 <Link href="/student/peer" className="hover:text-teal-400 transition-colors">
-                  Anonymous Peer Chat (P2P)
+                  Anonymous Peer Chat
                 </Link>
               </li>
               <li>
                 <Link href="/student/journal" className="hover:text-teal-400 transition-colors">
-                  Private Mood &amp; Journal
+                  Private Mood Journal
                 </Link>
               </li>
               <li>
                 <Link href="/student/support" className="hover:text-teal-400 transition-colors">
-                  Campus Resource Library
-                </Link>
-              </li>
-              <li>
-                <Link href="/student/help" className="hover:text-urgent-400 text-urgent-400 font-semibold transition-colors">
-                  Crisis &amp; Emergency Support
+                  Resource Library
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Platform & Staff */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+          {/* Column 3: Platform Governance & Staff (Col 3) */}
+          <div className="lg:col-span-3 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Staff &amp; Governance
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-300">
@@ -208,7 +203,7 @@ export function LandingFooter() {
               </li>
               <li>
                 <Link href="/counsellor/dashboard" className="hover:text-teal-400 transition-colors">
-                  Counsellor Case Management
+                  Counsellor Case Platform
                 </Link>
               </li>
               <li>
@@ -218,18 +213,38 @@ export function LandingFooter() {
               </li>
               <li>
                 <Link href="/demo" className="hover:text-teal-400 transition-colors">
-                  Full Prototype Walkthrough
+                  Prototype Walkthrough
                 </Link>
               </li>
             </ul>
           </div>
+
+          {/* Column 4: 24/7 Immediate Crisis Box (Col 3) */}
+          <div className="lg:col-span-3">
+            <div className="rounded-2xl border border-red-500/20 bg-red-950/20 p-4.5 space-y-2.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-red-400 uppercase tracking-wide">
+                <span>🆘</span> 24/7 Crisis Support
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                If you or someone you know is in immediate distress, free confidential emergency help is always available.
+              </p>
+              <div className="pt-1">
+                <Link
+                  href="/student/help"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-red-400 hover:text-red-300 hover:underline"
+                >
+                  View Emergency Contacts →
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Copyright & PsychOps Credit */}
-        <div className="border-t border-slate-800 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <p>© {new Date().getFullYear()} MindEase · Built by Team PsychOps</p>
-          <p className="text-center sm:text-right">
-            Crisis &amp; helpline contacts are configured by individual higher education institutions.
+        {/* Bottom Bar: Copyright, Institution note */}
+        <div className="border-t border-slate-800/80 mt-14 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+          <p>© {new Date().getFullYear()} MindEase · Built with care by Team PsychOps</p>
+          <p className="text-center sm:text-right text-slate-400 max-w-md">
+            Emergency contacts and counselling resources are institution-configured for student safety.
           </p>
         </div>
       </div>

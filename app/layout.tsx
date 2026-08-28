@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cinzel } from "next/font/google";
+import { Cinzel, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import { LockScreen } from "@/components/privacy";
 import { Toaster } from "@/components/ui";
@@ -51,6 +51,13 @@ try {
   // fallback if already present
 }
 
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
 const cinzel = Cinzel({
   subsets: ["latin"],
   variable: "--font-cinzel",
@@ -77,7 +84,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cinzel.variable}
+      className={`${plusJakarta.variable} ${cinzel.variable}`}
       data-theme="ocean"
       data-contrast="normal"
       data-motion="full"
