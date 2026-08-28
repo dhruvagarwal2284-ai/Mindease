@@ -66,6 +66,7 @@ export default function RequestCounsellingPage() {
       // Firebase rejects the entire request if even one value is 'undefined'
       const caseData = {
         caseId: newCaseId,
+        ownerId: state.identity?.handle || "MindMate User",
         studentHandle: scope.pseudonym && state.identity?.handle ? state.identity.handle : "Anonymous", // Fallback added
         concern: note ? note.slice(0, 50) + "..." : "General support", // Gives counsellor a hint
         mode: mode,

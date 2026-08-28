@@ -7,6 +7,8 @@ import { MindEaseLogo } from "@/components/MindEaseLogo";
 import { DataPermissionCard } from "@/components/privacy";
 import { Button, Chip, SkeletonCard } from "@/components/ui";
 import { cx } from "@/lib/format";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { CONSENT_COPY, DEFAULT_CONSENT, generateIdentity } from "@/lib/privacy";
 import { useStore } from "@/lib/store";
 import { CONCERN_TAGS } from "@/lib/types";
@@ -69,13 +71,14 @@ const REASONS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { ready, state, completeOnboarding } = useStore();
+  const { ready, state, completeOnboarding, saveAccountLocal } = useStore();
 
   const [step, setStep] = useState(0);
   const [identity, setIdentity] = useState<AnonymousIdentity | null>(null);
   const [interests, setInterests] = useState<ConcernTag[]>([]);
   const [consent, setConsent] = useState<ConsentSettings>({ ...DEFAULT_CONSENT });
   const [supportMode, setSupportMode] = useState<SupportRoleMode>("seeking");
+  const [newPin, setNewPin] = useState("");
 
   if (!ready) {
     return (
@@ -91,14 +94,40 @@ export default function OnboardingPage() {
 
   const next = () => {
     if (step === 2) ensureIdentity();
+    if (step === 3 && (!newPin || newPin.length < 4)) {
+      alert("Please set a 4-digit PIN to secure your account before continuing.");
+      return;
+    }
     setStep((s) => Math.min(STEPS.length - 1, s + 1));
   };
   const back = () => setStep((s) => Math.max(0, s - 1));
 
-  const finish = () => {
+  const finish = async () => {
+    if (!newPin || newPin.length < 4) {
+      alert("Please set a 4-digit PIN first!");
+      setStep(3);
+      return;
+    }
+
     const id = identity ?? generateIdentity();
-    completeOnboarding(id, consent, supportMode);
-    router.replace("/student/home");
+
+    try {
+      await setDoc(doc(db, "users", id.handle), {
+        handle: id.handle,
+        pin: newPin,
+        role: supportMode,
+        caseId: id.caseId || "A71X",
+        createdAt: new Date().toISOString(),
+      });
+
+      if (saveAccountLocal) saveAccountLocal(id.handle, newPin);
+
+      completeOnboarding(id, consent, supportMode);
+      router.replace("/student/home");
+    } catch (error) {
+      console.error("Error saving user:", error);
+      alert("Something went wrong setting up your account.");
+    }
   };
 
   const progress = ((step + 1) / STEPS.length) * 100;
@@ -142,7 +171,7 @@ export default function OnboardingPage() {
       </div>
 
       <div key={step} className="animate-fade-up">
-        {/* ---------------------------------------------------- 1 welcome */}
+        {/* 1 welcome */}
         {step === 0 ? (
           <section aria-labelledby="s0">
             <div className="mb-4">
@@ -162,7 +191,7 @@ export default function OnboardingPage() {
           </section>
         ) : null}
 
-        {/* ------------------------------------------------ 2 why mindease */}
+        {/* 2 why mindease */}
         {step === 1 ? (
           <section aria-labelledby="s1">
             <h1 id="s1" className="text-2xl font-semibold tracking-tight text-navy-900">
@@ -191,7 +220,7 @@ export default function OnboardingPage() {
           </section>
         ) : null}
 
-        {/* --------------------------------------------------- 3 privacy */}
+        {/* 3 privacy */}
         {step === 2 ? (
           <section aria-labelledby="s2">
             <h1 id="s2" className="text-2xl font-semibold tracking-tight text-navy-900">
@@ -215,7 +244,7 @@ export default function OnboardingPage() {
           </section>
         ) : null}
 
-        {/* -------------------------------------------------- 4 identity */}
+        {/* 4 identity */}
         {step === 3 ? (
           <section aria-labelledby="s3">
             <h1 id="s3" className="text-2xl font-semibold tracking-tight text-navy-900">
@@ -246,6 +275,23 @@ export default function OnboardingPage() {
               </Button>
             </div>
 
+            {/* 4-digit PIN Box */}
+            <div className="mt-5 rounded-xl border border-navy-100 bg-white p-5 text-center shadow-xs">
+              <p className="text-sm font-bold text-navy-900 mb-1">Set a 4-digit PIN</p>
+              <p className="muted text-xs mb-4">
+                You will need this PIN along with your pseudonym to log back in later.
+              </p>
+              <input
+                type="password"
+                maxLength={4}
+                required
+                placeholder="••••"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
+                className="w-36 px-4 py-2 text-center text-2xl tracking-[0.4em] border border-navy-200 rounded-lg outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 font-mono bg-navy-50/50"
+              />
+            </div>
+
             <div className="mt-5 rounded-xl border border-navy-100 bg-white p-4">
               <p className="text-sm font-medium text-navy-900">
                 There is no profile to fill in — on purpose.
@@ -258,7 +304,7 @@ export default function OnboardingPage() {
           </section>
         ) : null}
 
-        {/* ----------------------------------------------- 5 preferences */}
+        {/* 5 preferences */}
         {step === 4 ? (
           <section aria-labelledby="s4">
             <h1 id="s4" className="text-2xl font-semibold tracking-tight text-navy-900">
@@ -291,7 +337,7 @@ export default function OnboardingPage() {
           </section>
         ) : null}
 
-        {/* --------------------------------------------------- 6 consent */}
+        {/* 6 consent */}
         {step === 5 ? (
           <section aria-labelledby="s5">
             <h1 id="s5" className="text-2xl font-semibold tracking-tight text-navy-900">
@@ -303,20 +349,20 @@ export default function OnboardingPage() {
             </p>
             <div className="mt-5 space-y-2.5">
               {(Object.keys(CONSENT_COPY) as ConsentKey[]).map((key) => (
-                 <DataPermissionCard
-                   key={key}
-                   label={CONSENT_COPY[key].label}
-                   why={CONSENT_COPY[key].why}
-                   sensitive={CONSENT_COPY[key].sensitive}
-                   checked={consent[key]}
-                   onChange={(v) => setConsent((c) => ({ ...c, [key]: v }))}
-                 />
+                <DataPermissionCard
+                  key={key}
+                  label={CONSENT_COPY[key].label}
+                  why={CONSENT_COPY[key].why}
+                  sensitive={CONSENT_COPY[key].sensitive}
+                  checked={consent[key]}
+                  onChange={(v) => setConsent((c) => ({ ...c, [key]: v }))}
+                />
               ))}
             </div>
           </section>
         ) : null}
 
-        {/* ------------------------------------------------ 7 your role */}
+        {/* 7 your role */}
         {step === 6 ? (
           <section aria-labelledby="s6">
             <h1 id="s6" className="text-2xl font-semibold tracking-tight text-navy-900">
@@ -394,7 +440,7 @@ export default function OnboardingPage() {
         ) : null}
       </div>
 
-      {/* ------------------------------------------------------- controls */}
+      {/* controls */}
       <div className="mt-8 flex items-center gap-3">
         {step > 0 ? (
           <Button onClick={back}>Back</Button>
