@@ -142,6 +142,7 @@ export interface Post {
   saved: boolean;
   hidden: boolean;
   reported: boolean;
+  replies?: any[];
 }
 
 /* ------------------------------------------------------------- moderation */

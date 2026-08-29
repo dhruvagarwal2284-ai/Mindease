@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+import { collection, query, orderBy, onSnapshot, addDoc, doc, updateDoc } from "firebase/firestore";
+
 import { db } from "@/lib/firebase";
 import { useStore } from "@/lib/store";
 
@@ -23,6 +25,15 @@ export default function CommunityPage() {
   const [activeTopic, setActiveTopic] = useState("All topics");
   const [activeTab, setActiveTab] = useState("Recent");
 
+  const router = useRouter(); // 🔥 Page redirect ke liye
+  const [userMenuOpen, setUserMenuOpen] = useState<string | null>(null); // 🔥 Profile click dropdown ke liye
+
+  // 🔥 Naya state Discord-style reply box toggle karne ke liye
+  // 🔥 Naya state Discord-style reply box toggle karne ke liye
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+const [expandedPosts, setExpandedPosts] = useState<string[]>([]);
+ 
   // 🔥 1. FETCH GLOBAL POSTS (NO USER FILTER = VISIBLE TO ALL)
   useEffect(() => {
     const q = query(collection(db, "community_posts"), orderBy("createdAt", "desc"));
@@ -60,10 +71,29 @@ export default function CommunityPage() {
   };
 
   // Filter posts based on selected topic
+  // 🔥 3. HANDLE REPLY SUBMISSION TO FIREBASE
+  const handleReplySubmit = async (postId: string, currentReplies: any[] = []) => {
+    if (!replyText.trim()) return;
+    try {
+      const postRef = doc(db, "community_posts", postId);
+      const newReply = {
+        id: Date.now().toString(),
+        authorHandle: myHandle,
+        body: replyText,
+        createdAt: new Date().toISOString()
+      };
+      await updateDoc(postRef, { replies: [...currentReplies, newReply] });
+      setReplyText("");
+    } catch (error) {
+      console.error("Error replying:", error);
+      toast("Failed to reply.", "urgent");
+    }
+  };
+
+  // Filter posts based on selected topic
   const displayedPosts = activeTopic === "All topics" 
     ? posts 
     : posts.filter(p => p.topic === activeTopic);
-
   if (!ready) {
     return (
       <div className="space-y-4">
@@ -152,17 +182,47 @@ export default function CommunityPage() {
           displayedPosts.map((post) => (
             <article key={post.id} className="card p-5 border-navy-100 bg-white hover:border-navy-200 transition-colors shadow-sm">
               <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-xs">
-                    {post.authorHandle.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-navy-900">{post.authorHandle}</p>
-                    <p className="text-[11px] text-navy-400 font-medium">
-                      {new Date(post.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                    </p>
-                  </div>
+                
+                {/* 🔥 Yahan Clickable Profile & Dropdown banaya hai 🔥 */}
+                {/* 🔥 Yahan Clickable Profile & Dropdown banaya hai 🔥 */}
+                <div className="relative">
+                  <button 
+                    onClick={() => {
+                      if (post.authorHandle === myHandle) {
+                        toast("This is your own post! You cannot start a chat with yourself.", "info");
+                      } else {
+                        setUserMenuOpen(userMenuOpen === post.id ? null : post.id);
+                      }
+                    }}
+                    className="flex items-center gap-2 text-left hover:bg-navy-50 p-1.5 -ml-1.5 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-xs shrink-0">
+                      {post.authorHandle.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-navy-900">{post.authorHandle}</p>
+                      <p className="text-[11px] text-navy-400 font-medium">
+                        {new Date(post.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {userMenuOpen === post.id && post.authorHandle !== myHandle && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(null)}></div>
+                      <div className="absolute top-full left-0 mt-1 z-20 w-48 bg-white border border-navy-100 rounded-xl shadow-lg p-1 animate-fade-in">
+                        <button
+                          onClick={() => router.push(`/student/peer?target=${encodeURIComponent(post.authorHandle)}`)}
+                          className="w-full text-left px-3 py-2 text-sm font-semibold text-navy-700 hover:bg-teal-50 hover:text-teal-900 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                        >
+                          <span aria-hidden>💬</span> Talk to this peer
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
+
                 <Badge tone="navy">{post.topic}</Badge>
               </div>
               
@@ -174,12 +234,97 @@ export default function CommunityPage() {
                 <button className="flex items-center gap-1.5 text-xs font-semibold text-navy-500 hover:text-teal-700 transition-colors">
                   <span aria-hidden>🤍</span> {post.likes || 0} Likes
                 </button>
-                <button className="flex items-center gap-1.5 text-xs font-semibold text-navy-500 hover:text-teal-700 transition-colors">
+                {/*<button className="flex items-center gap-1.5 text-xs font-semibold text-navy-500 hover:text-teal-700 transition-colors">
                   <span aria-hidden>💬</span> Reply
                 </button>
               </div>
             </article>
+          )) */}
+<button 
+                  onClick={() => setReplyingTo(replyingTo === post.id ? null : post.id)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-navy-500 hover:text-teal-700 transition-colors cursor-pointer"
+                >
+                  {/* Button par direct replies ka count dikhega */}
+                  <span aria-hidden>💬</span> {post.replies?.length ? `${post.replies.length} Replies` : "Reply"}
+                </button>
+              </div>
+
+              {/* 🔥 DISCORD STYLE REPLIES & INPUT SECTION 🔥 */}
+              {/* Ab sirf tabhi dikhega jab user "Replies" button click karega */}
+              {replyingTo === post.id ? (
+                <div className="mt-3 border-t border-navy-50 pt-3 pl-2 bg-navy-50/30 rounded-b-xl animate-fade-in">
+                  
+                  {/* Agar replies 4 se zyada hain toh 'View all' toggle dikhao */}
+                  {post.replies && post.replies.length > 4 && !expandedPosts.includes(post.id) && (
+                    <div className="mb-2 pl-2 border-l-2 border-navy-100">
+                      <button 
+                        onClick={() => setExpandedPosts([...expandedPosts, post.id])}
+                        className="text-xs font-semibold text-navy-500 hover:text-navy-700 hover:underline cursor-pointer transition-colors"
+                      >
+                        View all {post.replies.length} replies...
+                      </button>
+                    </div>
+                  )}
+                  {post.replies && post.replies.length > 4 && expandedPosts.includes(post.id) && (
+                    <div className="mb-2 pl-2 border-l-2 border-navy-100">
+                      <button 
+                        onClick={() => setExpandedPosts(expandedPosts.filter(id => id !== post.id))}
+                        className="text-xs font-semibold text-navy-500 hover:text-navy-700 hover:underline cursor-pointer transition-colors"
+                      >
+                        Show less replies
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Reply Input Box */}
+                  <div className="flex gap-2 items-center mt-2">
+                    <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold text-[10px] shrink-0">
+                      {myHandle.substring(0, 2).toUpperCase()}
+                    </div>
+                    <input
+                      type="text"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder={`Reply to ${post.authorHandle}...`}
+                      className="flex-1 bg-white border border-navy-200 rounded-full px-4 py-1.5 text-xs focus:outline-none focus:border-teal-500 transition-colors"
+                      autoFocus
+                    />
+                    <Button 
+                      size="sm" 
+                      tone="primary" 
+                      onClick={() => handleReplySubmit(post.id, post.replies)}
+                      disabled={!replyText.trim()}
+                      className="py-1.5 px-3 text-xs rounded-full cursor-pointer disabled:opacity-50"
+                    >
+                      Send
+                    </Button>
+                  </div>
+
+                  {/* 🔥 ACTUAL REPLIES RENDER HONGE YAHAN 🔥 */}
+                  {post.replies && post.replies.length > 0 && (
+                    <div className="mt-3 space-y-2 pl-2 border-l-2 border-navy-100">
+                      {/* Sirf 4 replies dikhayega by default, jab tak View all click na ho */}
+                      {(expandedPosts.includes(post.id) ? post.replies : post.replies.slice(0, 4)).map((reply: any) => (
+                        <div key={reply.id} className="bg-white p-3 rounded-xl border border-navy-100 shadow-2xs">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-navy-900 text-xs">{reply.authorHandle}</span>
+                            <span className="text-[10px] text-navy-400">
+                              {new Date(reply.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-navy-800">{reply.body}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                </div>
+              ) : null}
+
+            </article> 
+               
           ))
+
         )}
       </div>
 
