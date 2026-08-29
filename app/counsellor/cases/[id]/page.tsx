@@ -355,14 +355,12 @@ import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 import { Badge, Button, SkeletonCard } from "@/components/ui";
-// 🔥 WAHI SAME CHAT COMPONENT IMPORT KIYA
 import { LiveChat } from "@/components/ui/LiveChat"; 
 
 export default function CounsellorCaseDetailPage() {
   const params = useParams();
   const router = useRouter();
   
-  // URL se case id nikal rahe hain
   const caseId = params.id as string;
 
   const [caseData, setCaseData] = useState<any>(null);
@@ -392,6 +390,24 @@ export default function CounsellorCaseDetailPage() {
     }
   };
 
+  // 3. 🔥 CASE CLOSE YA SCHEDULE KARNE KA LOGIC
+  const handleUpdateStatus = async (newStatus: string) => {
+    if (confirm(`Are you sure you want to mark this case as ${newStatus}?`)) {
+      try {
+        await updateDoc(doc(db, "cases", caseId), {
+          status: newStatus,
+          updatedAt: new Date().toISOString()
+        });
+        // Agar case close kiya, toh wapas dashboard bhej do
+        if (newStatus === "closed") {
+          router.push('/counsellor/cases');
+        }
+      } catch (error) {
+        console.error("Error updating status:", error);
+      }
+    }
+  };
+
   if (loading) return <div className="p-10"><SkeletonCard /></div>;
   
   if (!caseData) return (
@@ -407,7 +423,6 @@ export default function CounsellorCaseDetailPage() {
       {/* ================= LEFT SIDE: CASE DETAILS ================= */}
       <div className="w-full lg:w-[45%] space-y-6">
         
-        {/* Header */}
         <header className="flex items-start justify-between">
           <div>
             <button onClick={() => router.push('/counsellor/cases')} className="text-sm text-navy-500 hover:underline mb-2">
@@ -425,7 +440,6 @@ export default function CounsellorCaseDetailPage() {
           </Badge>
         </header>
 
-        {/* Case Info Card */}
         <div className="card p-5 space-y-5 shadow-sm border-navy-100">
           <div>
             <h3 className="text-xs font-bold text-navy-400 uppercase tracking-wider mb-1">Concern</h3>
@@ -456,12 +470,30 @@ export default function CounsellorCaseDetailPage() {
             </Button>
           </div>
         )}
+
+        {/* 🔥 ACTIVE CASE MANAGEMENT BUTTONS */}
+      {/* 🔥 ACTIVE OR SCHEDULED CASE MANAGEMENT BUTTONS */}
+        {(caseData.status === "active" || caseData.status === "scheduled") && (
+          <div className="card p-5 mt-6 border-navy-200 bg-white shadow-sm">
+            <h3 className="font-semibold text-navy-900 text-sm uppercase tracking-wide border-b border-navy-100 pb-2 mb-3">
+              Case Actions
+            </h3>
+            <div className="flex flex-col gap-3">
+              <Button tone="pro" full onClick={() => handleUpdateStatus('scheduled')}>
+                📅 Schedule Appointment
+              </Button>
+              <Button tone="primary" full onClick={() => handleUpdateStatus('closed')}>
+                ✅ Close Case (Move to History)
+              </Button>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* ================= RIGHT SIDE: LIVE CHAT ================= */}
-      <div className="w-full lg:w-[55%] sticky top-6">
-        {/* 🔥 Yahan se Lock pura hata diya hai! Direct Chat Render hogi */}
-        <LiveChat chatId={caseData.id} />
+      <div className="w-full lg:w-[55%] sticky top-6 border border-navy-100 rounded-xl overflow-hidden shadow-sm h-[600px]">
+        <LiveChat chatId={caseData.id} userType="counsellor" />
       </div>
 
     </div>
