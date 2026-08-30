@@ -8,12 +8,20 @@
 /* ------------------------------------------------------------------ base */
 
 html {
-  background: var(--color-canvas);
+  /* Literal fallback on purpose. `--color-canvas` is declared in the @theme
+     block, and Tailwind drops theme variables no utility references — nothing
+     uses a `bg-canvas` class, so it never reaches :root. Only the hand-written
+     html[data-theme="…"] blocks define it. Without the fallback every screen
+     with no explicit theme set would paint pure white. */
+  background: var(--color-canvas, #f7f9fb);
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--color-canvas);
+  /* Deliberately transparent. `html` above already paints the canvas colour,
+     and a background here would be an opaque in-flow block background — which
+     paints *over* the z-index:-1 ambient aurora and hides it completely. */
+  background: transparent;
   color: var(--color-navy-900);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -156,43 +164,159 @@ html[data-motion="reduced"] *::after {
   animation: me-pulse-soft 1.6s ease-in-out infinite;
 }
 
-@keyframes me-gentle-shake {
-  0% {
-    transform: rotate(0deg) translateY(0) scale(1);
-  }
-  20% {
-    transform: rotate(-0.6deg) translateY(-1px) scale(1.008);
-  }
-  40% {
-    transform: rotate(0.6deg) translateY(-1.5px) scale(1.01);
-  }
-  60% {
-    transform: rotate(-0.3deg) translateY(-1.5px) scale(1.01);
-  }
-  80% {
-    transform: rotate(0.2deg) translateY(-1px) scale(1.008);
-  }
-  100% {
-    transform: rotate(0deg) translateY(-1px) scale(1.008);
-  }
-}
-
+/* Hover lift.
+ *
+ * This used to be a rotate-and-shake keyframe. A jitter on hover reads as
+ * nervousness, which is the one feeling this product exists to reduce — so
+ * the motion is now a calm rise with a widening shadow. The class name is
+ * unchanged because call sites across the student screens already use it. */
 .animate-hover-shake {
-  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s ease;
 }
 
 .animate-hover-shake:hover {
-  animation: me-gentle-shake 0.45s ease-in-out;
-  transform: translateY(-2px) scale(1.008);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-float);
 }
 
 
 
+
+/* =====================================================================
+   Ambient aurora — the student surfaces only.
+   =====================================================================
+
+   Two very large, heavily blurred colour fields drifting behind the page.
+   The point is not decoration: a flat canvas reads as inert, and inert is
+   the thing depression already does to everything. This gives the screen
+   depth and slow movement that asks nothing of the person looking at it.
+
+   The palette is driven by `data-daypart` on <html>, set in the student
+   layout. Opening the app at 2am and at 2pm should not feel identical —
+   the product is about state, so the surface acknowledges state.
+
+   Every colour is a theme token, so all six themes adapt for free, and
+   the reduced-motion rules above stop the drift without removing it. */
+
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.42;
+  will-change: transform;
+}
+
+.aurora::before {
+  background: var(--aurora-a, var(--color-teal-200));
+  top: -26vmax;
+  left: -20vmax;
+  animation: me-drift-a 38s ease-in-out infinite alternate;
+}
+
+.aurora::after {
+  background: var(--aurora-b, var(--color-info-200));
+  bottom: -30vmax;
+  right: -22vmax;
+  animation: me-drift-b 46s ease-in-out infinite alternate;
+}
+
+@keyframes me-drift-a {
+  to {
+    transform: translate3d(12vmax, 8vmax, 0) scale(1.15);
+  }
+}
+
+@keyframes me-drift-b {
+  to {
+    transform: translate3d(-10vmax, -9vmax, 0) scale(1.1);
+  }
+}
+
+/* Dark canvas needs far less of it before the text loses contrast. */
+html[data-theme="midnight"] .aurora::before,
+html[data-theme="midnight"] .aurora::after {
+  opacity: 0.22;
+}
+
+/* High contrast mode drops soft tints entirely — the aurora is a tint. */
+html[data-contrast="high"] .aurora {
+  display: none;
+}
+
+html[data-daypart="night"] {
+  --aurora-a: var(--color-pro-300);
+  --aurora-b: var(--color-navy-300);
+}
+
+html[data-daypart="morning"] {
+  --aurora-a: var(--color-amber-200);
+  --aurora-b: var(--color-teal-300);
+}
+
+html[data-daypart="afternoon"] {
+  --aurora-a: var(--color-teal-200);
+  --aurora-b: var(--color-info-200);
+}
+
+html[data-daypart="evening"] {
+  --aurora-a: var(--color-info-200);
+  --aurora-b: var(--color-pro-200);
+}
+
+/* ---------------------------------------------------- student surfaces ---
+   Cards on the student side sit on the aurora, so they get a translucent
+   ground and a softer, deeper shadow — content held rather than ruled off.
+   Counsellor screens keep the crisp flat card: that is a work tool and
+   density matters more there than warmth. */
+
+.student-surface .card {
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  border-color: color-mix(in srgb, var(--color-navy-200) 55%, transparent);
+  box-shadow: var(--shadow-raised);
+  transition:
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s ease;
+}
+
+/* Staggered entrance. Children of a `.stagger` container fade up in
+   sequence rather than all at once, so a screen assembles calmly instead
+   of arriving as a wall. */
+.stagger > * {
+  animation: me-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 0.04s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.stagger > *:nth-child(4) { animation-delay: 0.22s; }
+.stagger > *:nth-child(5) { animation-delay: 0.28s; }
+.stagger > *:nth-child(6) { animation-delay: 0.34s; }
+.stagger > *:nth-child(n + 7) { animation-delay: 0.4s; }
 
 /* Print: the counsellor screens are occasionally printed for case files. */
 @media print {
   .no-print {
     display: none !important;
+  }
+
+  .aurora {
+    display: none;
   }
 }
 /* ================================================================

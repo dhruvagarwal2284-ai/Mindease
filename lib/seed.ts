@@ -174,6 +174,66 @@ export function seedPosts(): Post[] {
       mood: 2,
       reactions: { understand: 21, notalone: 6 },
     },
+
+    /* Posts 9-14 spread one per day across the last week. The eight above are
+       all within about two days of each other, which left the peer-supporter
+       board with nothing to measure: "days present" was always 1 or 2 and
+       there were too few answerable posts for "first to respond" to mean
+       anything. These give the week some depth. */
+    {
+      id: "seed_p_9",
+      handle: "MindMate #C1F04",
+      body: "Had a viva today where I blanked completely on something I definitely know. Walked out and couldn't stop replaying it. Does that fade or do you just collect them?",
+      topic: "Academics",
+      hours: 144,
+      mood: 2,
+      reactions: { understand: 14, here: 5 },
+    },
+    {
+      id: "seed_p_10",
+      handle: "MindMate #58A7E",
+      body: "My roommate's alarm goes off at 5:40 every morning and he snoozes it for an hour. I've not said anything for four months because it feels too small to bring up. It is not feeling small anymore.",
+      topic: "Hostel life",
+      hours: 120,
+      mood: 2,
+      reactions: { understand: 19, notalone: 8, here: 3 },
+    },
+    {
+      id: "seed_p_11",
+      handle: "MindMate #2B6D9",
+      body: "Third rejection this month, and this one was after the final round. I know it's a numbers game. Knowing that has not made today easier.",
+      topic: "Career",
+      hours: 96,
+      mood: 1,
+      reactions: { here: 22, sending: 15, keepgoing: 9 },
+    },
+    {
+      id: "seed_p_12",
+      handle: "MindMate #9E3C7",
+      body: "The friend group I had first year has quietly reshuffled without me. Nothing happened, nobody was unkind, I just seem to have ended up outside it. Not sure whether to say something or let it be.",
+      topic: "Relationships",
+      hours: 72,
+      mood: 2,
+      reactions: { understand: 16, notalone: 11 },
+    },
+    {
+      id: "seed_p_13",
+      handle: "MindMate #F40B2",
+      body: "Picked up weekend tutoring to cover mess fees. It helps, but I've now got no day off and my attendance is slipping. Feels like solving one problem by starting another.",
+      topic: "Financial stress",
+      hours: 48,
+      mood: 2,
+      reactions: { here: 13, understand: 7 },
+    },
+    {
+      id: "seed_p_14",
+      handle: "MindMate #7D1A5",
+      body: "Small thing but I cooked properly for the first time in weeks instead of ordering in again. Posting it here because there's nobody at home to tell.",
+      topic: "General",
+      hours: 24,
+      mood: 4,
+      reactions: { keepgoing: 28, here: 6 },
+    },
   ];
 
   return rows.map((r) => ({
@@ -194,66 +254,119 @@ export function seedPosts(): Post[] {
   }));
 }
 
+/**
+ * The regular peer supporters. Named rather than cycled through an array so
+ * the leaderboard has distinguishable people in it: each of these earns a
+ * different award, which is the only way to see that the awards measure
+ * different things.
+ *
+ *   ELM  most first replies, and the highest total          -> Top Supporter,
+ *                                                              First to Respond
+ *   BEA  most support reactions received                    -> Most Thanked
+ *   CAI  replied on the most separate days                  -> Steady Presence
+ *   AVA, DEV, FIN  fill out the board below them
+ *
+ * See `lib/leaderboard.ts` for the scoring these are built against, and
+ * `scripts/check-leaderboard.mjs` for the rules.
+ */
+const AVA = "MindMate #3F2A9";
+const BEA = "MindMate #B14E7";
+const CAI = "MindMate #6C0D2";
+const DEV = "MindMate #D93A1";
+const ELM = "MindMate #7E5C1";
+const FIN = "MindMate #A24B8";
+
 export function seedReplies(): Reply[] {
-  const rows: [string, string, string, number][] = [
-    [
-      "seed_r_1",
-      "seed_p_1",
+  /** [id, postId, handle, body, daysAgo, hour, reactions] */
+  const rows: [string, string, string, string, number, number, Reply["reactions"]][] = [
+    /* ---- day 6 ---------------------------------------------------------- */
+    ["seed_r_9", "seed_p_9", ELM,
+      "It fades, but not because you stop caring — you just stop being able to recall the specifics. I could not have told you last term's blank if you paid me.",
+      6, 13, { here: 1, notalone: 1 }],
+    ["seed_r_10", "seed_p_9", CAI,
+      "Blanking in a viva is your brain going quiet under load, not a gap in what you know. Those are genuinely different things.",
+      6, 15, { here: 1 }],
+    ["seed_r_11", "seed_p_9", BEA,
+      "I collect them, honestly. What changed was noticing the examiner had forgotten it by the time I reached the corridor, and I was the only one still in the room.",
+      6, 17, { understand: 3, here: 2 }],
+
+    /* ---- day 5 ---------------------------------------------------------- */
+    ["seed_r_12", "seed_p_10", ELM,
+      "Four months is not too late and it is not too small. \"Hey, could you move your alarm across the room?\" is a normal sentence, even if it does not feel like one right now.",
+      5, 13, { here: 2 }],
+    ["seed_r_13", "seed_p_10", CAI,
+      "Sleep debt makes everything else on this feed harder. This is the opposite of a small thing.",
+      5, 16, { sending: 1 }],
+
+    /* ---- day 4 ---------------------------------------------------------- */
+    ["seed_r_14", "seed_p_11", ELM,
+      "Final round means they had already decided you could do the job. That is not nothing, even though today it does not spend.",
+      4, 13, { notalone: 2, keepgoing: 1 }],
+    ["seed_r_15", "seed_p_11", AVA,
+      "Three in a month is brutal pacing. Is there space to not apply to anything for a week?",
+      4, 15, { here: 2 }],
+    ["seed_r_16", "seed_p_11", BEA,
+      "The numbers-game line is true and it is also useless on the day. Both can hold. Sorry about this one.",
+      4, 17, { understand: 4, sending: 1 }],
+
+    /* ---- day 3 ---------------------------------------------------------- */
+    ["seed_r_17", "seed_p_12", ELM,
+      "This happened to me in second year. What I wish I had known: the reshuffle was mostly timetables, not a verdict on me.",
+      3, 13, { here: 1 }],
+    ["seed_r_18", "seed_p_12", CAI,
+      "Saying something small to one person in the group is much less exposing than addressing the whole thing.",
+      3, 17, { here: 1 }],
+
+    /* ---- day 2 ---------------------------------------------------------- */
+    ["seed_r_19", "seed_p_13", ELM,
+      "That is not you failing to cope, that is a timetable with no slack in it. Worth asking the office about hardship support before the attendance becomes its own problem.",
+      2, 13, { keepgoing: 2 }],
+    ["seed_r_20", "seed_p_13", DEV,
+      "Did the same in my second year. The day off is not a luxury line item, it is what makes the rest hold together.",
+      2, 15, { here: 1 }],
+    ["seed_r_21", "seed_p_13", CAI,
+      "Solving one problem by starting another is such an accurate way to put it.",
+      2, 18, { notalone: 2 }],
+
+    /* ---- day 1 ---------------------------------------------------------- */
+    ["seed_r_22", "seed_p_14", CAI,
+      "Cooking properly when you have been running on delivery is a real marker. Glad you put it somewhere.",
+      1, 13, { here: 2, sending: 1 }],
+    ["seed_r_23", "seed_p_14", BEA,
+      "Telling it here counts. That is most of what this place is for.",
+      1, 16, { understand: 3, here: 3 }],
+
+    /* ---- today ---------------------------------------------------------- */
+    ["seed_r_1", "seed_p_1", CAI,
       "The loop is real. What broke it for me was making the first task absurdly small — open the document, write the title, close it. Not advice, just what happened to work.",
-      1.5,
-    ],
-    [
-      "seed_r_2",
-      "seed_p_1",
+      0, 14, { here: 2, keepgoing: 2 }],
+    ["seed_r_2", "seed_p_1", FIN,
       "I'm in exactly this right now, so no wisdom, but you're not the only one sitting in it tonight.",
-      1.2,
-    ],
-    [
-      "seed_r_3",
-      "seed_p_2",
+      0, 16, { notalone: 2 }],
+    ["seed_r_3", "seed_p_2", AVA,
       "Same, and I'm in final year. The window doesn't actually close, it just feels like it did. The lab group thing worked for me because it's a reason to be somewhere rather than a social ask.",
-      5,
-    ],
-    [
-      "seed_r_4",
-      "seed_p_2",
-      "Sitting with you on this one.",
-      4.4,
-    ],
-    [
-      "seed_r_5",
-      "seed_p_4",
+      0, 13, { here: 4, notalone: 2 }],
+    ["seed_r_4", "seed_p_2", FIN, "Sitting with you on this one.", 0, 15, { here: 1 }],
+    ["seed_r_5", "seed_p_4", DEV,
       "My version of this was placement questions at dinner every Sunday. What helped was answering once, properly, and then asking them to hold off until I had news. It didn't fix it but it bought quiet.",
-      18,
-    ],
-    [
-      "seed_r_6",
-      "seed_p_7",
+      0, 14, { here: 2, keepgoing: 1 }],
+    ["seed_r_6", "seed_p_7", BEA,
       "That's a lot to be carrying quietly. There's a hardship fund conversation worth having with the office — it isn't as formal as it sounds.",
-      40,
-    ],
-    [
-      "seed_r_7",
-      "seed_p_8",
+      0, 13, { here: 2, understand: 2 }],
+    ["seed_r_7", "seed_p_8", AVA,
       "Third year did not click for me either and I'm fine now, in a way I did not expect. The waiting really is the worst part.",
-      50,
-    ],
+      0, 13, { here: 3, notalone: 1 }],
   ];
-  const handles = [
-    "MindMate #3F2A9",
-    "MindMate #B14E7",
-    "MindMate #6C0D2",
-    "MindMate #D93A1",
-  ];
-  return rows.map(([id, postId, body, hours], i) => ({
+
+  return rows.map(([id, postId, authorHandle, body, days, hour, reactions]) => ({
     id,
     postId,
-    authorHandle: handles[i % handles.length],
+    authorHandle,
     authorIsSelf: false,
     body,
-    createdAt: at(hours / 24, 14, 0),
+    createdAt: at(days, hour, 0),
     moderation: "published" as const,
-    reactions: { here: (i * 3) % 7 },
+    reactions,
     myReactions: [],
   }));
 }

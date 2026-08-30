@@ -18,14 +18,14 @@ export default function StudentSupportPage() {
   }
 
   // Combine default resources with any custom resources uploaded by the counsellor
-  const allResources = [...(state.customResources || []), ...RESOURCES] as any[];
+  const allResources = [...(state.customResources || []), ...RESOURCES];
   // Filtering Logic (Search + Category)
-  const filteredResources = allResources.filter(r => {
+  const filteredResources = allResources.filter((r) => {
     const matchesCategory = filter === "All" || r.category === filter;
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = r.title.toLowerCase().includes(searchLower) || 
-                          r.summary?.toLowerCase().includes(searchLower) || 
-                          (r.tags && r.tags.some(t => t.toLowerCase().includes(searchLower)));
+    const matchesSearch = r.title.toLowerCase().includes(searchLower) ||
+                          r.summary.toLowerCase().includes(searchLower) ||
+                          r.matches.some((t) => t.toLowerCase().includes(searchLower));
     return matchesCategory && matchesSearch;
   });
 
@@ -104,18 +104,16 @@ export default function StudentSupportPage() {
                 <div className="flex justify-between items-start gap-4">
                   <div>
                     <h3 className="text-base font-semibold text-navy-900">{resource.title}</h3>
-                    <p className="text-xs text-navy-500 mt-1">{resource.category} · {resource.readTime || "5 min read"}</p>
+                    <p className="text-xs text-navy-500 mt-1">{resource.category} · {resource.minutes} min read</p>
                     <p className="text-sm text-navy-700 mt-2">{resource.summary}</p>
                   </div>
-                  {resource.readTime && (
-                    <Badge tone="neutral" className="shrink-0">{resource.readTime}</Badge>
-                  )}
+                  <Badge tone="neutral" className="shrink-0">{resource.minutes} min</Badge>
                 </div>
                 
                 {/* Resource Tags */}
-                {resource.tags && resource.tags.length > 0 && (
+                {resource.matches.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-4">
-                    {resource.tags.map(tag => (
+                    {resource.matches.map((tag) => (
                       <Badge key={tag} tone="neutral" className="text-[10px] uppercase tracking-wider">{tag}</Badge>
                     ))}
                   </div>

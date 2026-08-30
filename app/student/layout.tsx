@@ -23,6 +23,22 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     if (ready && !state.onboarded && !isOpenRoute) router.replace("/onboarding");
   }, [ready, state.onboarded, isOpenRoute, router]);
 
+  // Tint the ambient aurora by time of day. Set from an effect rather than
+  // during render because the server and the student's device can disagree
+  // about the hour, and a hydration mismatch here would flash the wrong
+  // palette. Re-checked every 10 minutes so a long session crosses over.
+  useEffect(() => {
+    const apply = () => {
+      const h = new Date().getHours();
+      const part =
+        h < 5 ? "night" : h < 12 ? "morning" : h < 17 ? "afternoon" : h < 22 ? "evening" : "night";
+      document.documentElement.dataset.daypart = part;
+    };
+    apply();
+    const id = setInterval(apply, 600_000);
+    return () => clearInterval(id);
+  }, []);
+
   if (!ready || (!state.onboarded && !isOpenRoute)) {
     return (
       <div className="mx-auto max-w-3xl space-y-3 px-4 py-16">
@@ -33,8 +49,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="min-h-dvh lg:flex">
-      <aside className="no-print sticky top-0 hidden h-dvh w-64 shrink-0 border-r border-navy-100 bg-white lg:block">
+    <div className="student-surface min-h-dvh lg:flex">
+      <div className="aurora no-print" aria-hidden />
+      <aside className="no-print sticky top-0 hidden h-dvh w-64 shrink-0 border-r border-navy-100/70 bg-white/70 backdrop-blur-xl lg:block">
         <StudentSidebar />
       </aside>
       <div className="min-w-0 flex-1">

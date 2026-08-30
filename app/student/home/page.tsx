@@ -10,7 +10,8 @@ import { db } from "@/lib/firebase";
 import { DailyCheckIn } from "@/components/checkin";
 import { AnonymousModeBar } from "@/components/privacy";
 import { AiUnavailable, StudentSupportPrompt } from "@/components/support";
-import { Badge, Button, LinkButton, SkeletonCard } from "@/components/ui";
+import { Badge, Button, Card, LinkButton, SkeletonCard } from "@/components/ui";
+import { Breathe } from "@/components/ui/Breathe";
 import { LiveChat } from "@/components/ui/LiveChat"; 
 import { cx, isoDay } from "@/lib/format";
 import { recommendResources } from "@/lib/resources";
@@ -127,10 +128,10 @@ export default function StudentHomePage() {
   const showPrompt = analysisOn && !state.simulate.aiDown && shouldPromptStudent(indicator) && state.dismissedPromptOn !== isoDay();
 
   return (
-    <div className="space-y-5 pb-0">
+    <div className="stagger space-y-5 pb-0">
       <ThemeSelector />
 
-      <header className="animate-fade-up">
+      <header>
         <p className="muted text-sm">{greetingFor(new Date())},</p>
         <h1 className="text-2xl font-semibold tracking-tight text-navy-900">{myHandle}</h1>
         <p className="muted mt-1 text-sm">What support could you use right now?</p>
@@ -138,6 +139,12 @@ export default function StudentHomePage() {
       </header>
 
       <DailyCheckIn />
+
+      {/* Offered, never prescribed — no streak, nothing recorded. The one
+          thing on this screen that asks nothing of the person using it. */}
+      <Card className="py-7">
+        <Breathe />
+      </Card>
 
       <div aria-live="polite">
         {analysisOn && state.simulate.aiDown ? <AiUnavailable /> : null}
