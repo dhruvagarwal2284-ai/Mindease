@@ -37,6 +37,7 @@ export default function MyAccountsPage() {
         setIdentity({
           handle: targetHandle,
           caseId: userData.caseId || "A71X",
+          createdAt: userData.createdAt || new Date().toISOString(),
         });
         toast(`Switched to ${targetHandle}`, "success");
         setShowPinModal(false);

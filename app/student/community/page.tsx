@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { collection, query, orderBy, onSnapshot, addDoc, doc, updateDoc } from "firebase/firestore";
 
@@ -14,6 +14,51 @@ import { cx } from "@/lib/format";
 const TOPICS = ["All topics", "Academics", "Relationships", "Family", "Loneliness", "Career", "Financial stress", "Hostel life", "General"];
 const TABS = ["For You", "Recent", "Trending", "Unanswered"];
 
+/**
+ * Check-in concern tags (lib/types.ts CONCERN_TAGS) onto feed topics. The two
+ * vocabularies were written separately and do not match: "Finances" vs
+ * "Financial stress", "Hostel" vs "Hostel life", and "Exams" has no topic of
+ * its own. "For You" needs the bridge. Sleep is deliberately absent — there is
+ * no feed topic for it, so it contributes nothing rather than mis-filing.
+ */
+const TAG_TO_TOPIC: Record<string, string> = {
+  Academics: "Academics",
+  Exams: "Academics",
+  Relationships: "Relationships",
+  Family: "Family",
+  Finances: "Financial stress",
+  Loneliness: "Loneliness",
+  Career: "Career",
+  Hostel: "Hostel life",
+  Other: "General",
+};
+
+const replyCount = (p: { replies?: unknown[] }) => p.replies?.length ?? 0;
+
+/** Shown when a tab filters everything out — each tab fails differently. */
+const EMPTY_COPY: Record<string, { icon: string; title: string; body: string }> = {
+  "For You": {
+    icon: "🌱",
+    title: "Nothing here matches your check-ins yet",
+    body: "For You uses the concern tags from your own check-ins. Try Recent, or add a check-in on the home screen.",
+  },
+  Unanswered: {
+    icon: "💬",
+    title: "Every post has a reply",
+    body: "Nobody on the feed is waiting right now. That is the point of this tab being empty.",
+  },
+  Recent: {
+    icon: "🌱",
+    title: "No posts yet. Be the first to share something.",
+    body: "Whatever you write here shows up under your pseudonym, never your name.",
+  },
+  Trending: {
+    icon: "🌱",
+    title: "Nothing has picked up yet",
+    body: "Posts move here once other students react or reply.",
+  },
+};
+
 export default function CommunityPage() {
   const { ready, state, toast } = useStore();
   const myHandle = state.identity?.handle ?? "MindMate Anonymous";
@@ -24,6 +69,15 @@ export default function CommunityPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTopic, setActiveTopic] = useState("All topics");
   const [activeTab, setActiveTab] = useState("Recent");
+
+  // Deep link, e.g. /student/community?tab=Unanswered — the leaderboard's
+  // "Go answer one" lands here. Read from location rather than
+  // useSearchParams so this page keeps prerendering without a Suspense
+  // boundary; it is client-only anyway.
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab && TABS.includes(tab)) setActiveTab(tab);
+  }, []);
 
   const router = useRouter(); // 🔥 Page redirect ke liye
   const [userMenuOpen, setUserMenuOpen] = useState<string | null>(null); // 🔥 Profile click dropdown ke liye
@@ -90,10 +144,31 @@ const [expandedPosts, setExpandedPosts] = useState<string[]>([]);
     }
   };
 
-  // Filter posts based on selected topic
-  const displayedPosts = activeTopic === "All topics" 
-    ? posts 
-    : posts.filter(p => p.topic === activeTopic);
+  // Topics this student actually checks in about, used by the "For You" tab.
+  const myTopics = useMemo(() => {
+    const tags = (state.checkIns ?? []).slice(0, 12).flatMap((c) => c.tags ?? []);
+    return new Set(tags.map((t) => TAG_TO_TOPIC[t]).filter(Boolean));
+  }, [state.checkIns]);
+
+  // Topic chips and the tab compose: the chips narrow the subject, the tab
+  // decides which slice of that subject you get.
+  const displayedPosts = useMemo(() => {
+    let rows = activeTopic === "All topics" ? posts : posts.filter((p) => p.topic === activeTopic);
+
+    if (activeTab === "Unanswered") {
+      rows = rows.filter((p) => replyCount(p) === 0);
+    } else if (activeTab === "For You" && myTopics.size > 0) {
+      rows = rows.filter((p) => myTopics.has(p.topic));
+    } else if (activeTab === "Trending") {
+      // A reply is a stronger signal of a post landing than a like, so it
+      // counts double. Sorted copy — never sort the Firestore array in place.
+      const heat = (p: { likes?: number; replies?: unknown[] }) =>
+        (p.likes ?? 0) + replyCount(p) * 2;
+      rows = [...rows].sort((a, b) => heat(b) - heat(a));
+    }
+    // "Recent" is the Firestore query order (createdAt desc) — nothing to do.
+    return rows;
+  }, [posts, activeTopic, activeTab, myTopics]);
   if (!ready) {
     return (
       <div className="space-y-4">
@@ -173,11 +248,7 @@ const [expandedPosts, setExpandedPosts] = useState<string[]>([]);
         {loading ? (
           <SkeletonCard />
         ) : displayedPosts.length === 0 ? (
-          <EmptyState
-            icon="🌱"
-            title="No posts yet. Be the first to share something."
-            body="Whatever you write here shows up under your pseudonym, never your name."
-          />
+          <EmptyState {...(EMPTY_COPY[activeTab] ?? EMPTY_COPY.Recent)} />
         ) : (
           displayedPosts.map((post) => (
             <article key={post.id} className="card p-5 border-navy-100 bg-white hover:border-navy-200 transition-colors shadow-sm">
